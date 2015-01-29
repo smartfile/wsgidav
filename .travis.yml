@@ -6,3 +6,5 @@ install:
   "pip install Paste"
 script:
   - nosetests -v --exclude test_litmus
+notifications:
+  slack: smartfile:tbDIPzVJIPBpSz29kQw6b8RQ
