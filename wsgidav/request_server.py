@@ -806,8 +806,11 @@ class RequestServer(object):
         
         # Destination header may be quoted (e.g. DAV Explorer sends unquoted, 
         # Windows quoted)
+
+        fixed_http_dest = environ["HTTP_DESTINATION"].replace("%25", "%")
+        environ["HTTP_DESTINATION"] = fixed_http_dest
         destinationHeader = urllib.unquote(environ["HTTP_DESTINATION"])
-        
+
         # Return fragments as part of <path>
         # Fixes litmus -> running `basic': 9. delete_fragment....... WARNING: DELETE removed collection resource withRequest-URI including fragment; unsafe
         destScheme, destNetloc, destPath, \
