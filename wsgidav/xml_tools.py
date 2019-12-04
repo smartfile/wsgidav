@@ -14,9 +14,9 @@ __docformat__ = "reStructuredText"
 
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 # Import XML support
 useLxml = False
@@ -33,7 +33,7 @@ except ImportError:
             # Try elementtree (http://effbot.org/zone/element-index.htm) 
             from elementtree import ElementTree as etree
         except ImportError:
-            print "ERROR: Could not import lxml, xml, nor elementtree. Consider installing lxml from http://codespeak.net/lxml/ or update to Python 2.5 or later."
+            print("ERROR: Could not import lxml, xml, nor elementtree. Consider installing lxml from http://codespeak.net/lxml/ or update to Python 2.5 or later.")
             raise
 
 
@@ -45,7 +45,7 @@ def stringToXML(text):
     """Convert XML string into etree.Element."""
     try:
         return etree.XML(text)
-    except Exception, e:
+    except Exception as e:
         # TODO:
         # ExpatError: reference to invalid character number: line 1, column 62
         # litmus fails, when xml is used instead of lxml
@@ -53,7 +53,7 @@ def stringToXML(text):
         # text = <ns0:high-unicode xmlns:ns0="http://example.com/neon/litmus/">&#55296;&#56320;</ns0:high-unicode>
 #        t2 = text.encode("utf8")
 #        return etree.XML(t2)
-        print >>sys.stderr, "Error parsing XML string. If lxml is not available, and unicode is involved, then installing it _may_ solve this issue."
+        print("Error parsing XML string. If lxml is not available, and unicode is involved, then installing it _may_ solve this issue.", file=sys.stderr)
         raise
 
 
@@ -103,7 +103,7 @@ def elementContentAsString(element):
         return element.text or ""  # Make sure, None is returned as '' 
     stream = StringIO()
     for childnode in element:
-        print >>stream, xmlToString(childnode, pretty_print=False)
+        print(xmlToString(childnode, pretty_print=False), file=stream)
     s = stream.getvalue()
     stream.close()
     return s

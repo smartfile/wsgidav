@@ -13,7 +13,7 @@ from wsgidav.dav_error import DAVError, HTTP_PRECONDITION_FAILED, HTTP_NOT_MODIF
     HTTP_NO_CONTENT, HTTP_CREATED, getHttpStatusString, HTTP_BAD_REQUEST,\
     HTTP_OK
 from wsgidav.xml_tools import xmlToString, makeSubElement
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import socket
 
 
@@ -33,18 +33,18 @@ import stat
 
 try:
     from email.utils import formatdate, parsedate
-except ImportError, e:
+except ImportError as e:
     # Python < 2.5
     from email.Utils import formatdate, parsedate
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO #@UnusedImport
+    from io import StringIO #@UnusedImport
 
 #import xml_tools
 ## Trick PyDev to do intellisense and don't produce warnings:
-from xml_tools import etree #@UnusedImport
+from .xml_tools import etree #@UnusedImport
 if False: from xml.etree import ElementTree as etree     #@Reimport @UnresolvedImport
 
 __docformat__ = "reStructuredText"
@@ -301,7 +301,7 @@ def traceCall(msg=None):
         if msg is None:
             msg = ": %s"
         else: msg = ""
-        print "%s.%s #%s%s" % (f_code.co_filename, f_code.co_name, f_code.co_lineno, msg)
+        print(("%s.%s #%s%s" % (f_code.co_filename, f_code.co_name, f_code.co_lineno, msg)))
 
 
 #===============================================================================
@@ -436,7 +436,7 @@ def getContentLength(environ):
     """Return a positive CONTENT_LENGTH in a safe way (return 0 otherwise)."""
     # TODO: http://www.wsgi.org/wsgi/WSGI_2.0
     try:
-        return max(0, long(environ.get("CONTENT_LENGTH", 0)))
+        return max(0, int(environ.get("CONTENT_LENGTH", 0)))
     except ValueError:
         return 0
 
@@ -514,7 +514,7 @@ def readAndDiscardInput(environ):
                     n = 1
                 body = wsgi_input.read(n)
                 debug("Reading %s bytes from potentially unread POST body: '%s'..." % (n, body[:50]))
-            except socket.error, se:
+            except socket.error as se:
                 # se(10035, 'The socket operation could not complete without blocking')
                 warn("-> read %s bytes failed: %s" % (n, se))
             # Restore socket settings
@@ -621,10 +621,10 @@ def makeCompleteUrl(environ, localUri=None):
             if environ["SERVER_PORT"] != "80":
                 url += ":" + environ["SERVER_PORT"]
     
-    url += urllib.quote(environ.get("SCRIPT_NAME",""))
+    url += urllib.parse.quote(environ.get("SCRIPT_NAME",""))
 
     if localUri is None:
-        url += urllib.quote(environ.get("PATH_INFO",""))
+        url += urllib.parse.quote(environ.get("PATH_INFO",""))
         if environ.get("QUERY_STRING"):
             url += "?" + environ["QUERY_STRING"]
     else:
@@ -684,7 +684,7 @@ def parseXmlBody(environ, allowEmpty=False):
         requestbody = ""
     else:
         try:
-            contentLength = long(clHeader)
+            contentLength = int(clHeader)
             if contentLength < 0:   
                 raise DAVError(HTTP_BAD_REQUEST, "Negative content-length.")
         except ValueError:
@@ -704,7 +704,7 @@ def parseXmlBody(environ, allowEmpty=False):
     
     try:
         rootEL = etree.fromstring(requestbody)
-    except Exception, e:
+    except Exception as e:
         raise DAVError(HTTP_BAD_REQUEST, "Invalid XML format.", srcexception=e)   
     
     # If dumps of the body are desired, then this is the place to do it pretty:
@@ -866,7 +866,7 @@ def getETag(filePath):
     # (At least on Vista) os.path.exists returns False, if a file name contains 
     # special characters, even if it is correctly UTF-8 encoded.
     # So we convert to unicode. On the other hand, md5() needs a byte string.
-    if isinstance(filePath, unicode):
+    if isinstance(filePath, str):
         unicodeFilePath = filePath
         filePath = filePath.encode("utf8")
     else:
@@ -908,11 +908,11 @@ def obtainContentRanges(rangetext, filesize):
             mObj = reByteRangeSpecifier.search(subrange)
             if mObj:
 #                print mObj.group(0), mObj.group(1), mObj.group(2), mObj.group(3)  
-                firstpos = long(mObj.group(2))
+                firstpos = int(mObj.group(2))
                 if mObj.group(3) == "":
                     lastpos = filesize - 1
                 else:
-                    lastpos = long(mObj.group(3))
+                    lastpos = int(mObj.group(3))
                 if firstpos <= lastpos and firstpos < filesize:
                     if lastpos >= filesize:
                         lastpos = filesize - 1
@@ -921,7 +921,7 @@ def obtainContentRanges(rangetext, filesize):
         if not matched:      
             mObj = reSuffixByteRangeSpecifier.search(subrange)
             if mObj:
-                firstpos = filesize - long(mObj.group(2))
+                firstpos = filesize - int(mObj.group(2))
                 if firstpos < 0:
                     firstpos = 0
                 lastpos = filesize - 1
@@ -968,7 +968,7 @@ def readTimeoutValueHeader(timeoutvalue):
         else:
             listSR = reSecondsReader.findall(timeoutspec)
             for secs in listSR:
-                timeoutsecs = long(secs)
+                timeoutsecs = int(secs)
                 if timeoutsecs > MAX_FINITE_TIMEOUT_LIMIT:
                     return -1          
                 if timeoutsecs != 0:
@@ -1198,19 +1198,19 @@ def testLogging():
     _baseLogger.info("_baseLogger.info")  
     _baseLogger.warning("_baseLogger.warning")  
     _baseLogger.error("_baseLogger.error")  
-    print 
+    print() 
 
     _enabledLogger.debug("_enabledLogger.debug")  
     _enabledLogger.info("_enabledLogger.info")  
     _enabledLogger.warning("_enabledLogger.warning")  
     _enabledLogger.error("_enabledLogger.error")  
-    print 
+    print() 
     
     _disabledLogger.debug("_disabledLogger.debug")  
     _disabledLogger.info("_disabledLogger.info")  
     _disabledLogger.warning("_disabledLogger.warning")  
     _disabledLogger.error("_disabledLogger.error")  
-    print 
+    print() 
 
     write("util.write()")
     warn("util.warn()")

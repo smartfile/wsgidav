@@ -30,9 +30,9 @@ from wsgidav.util import joinUri
 from pprint import pformat
 from bson.objectid import ObjectId
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO #@UnusedImport
+    from io import StringIO #@UnusedImport
 
 __docformat__ = "reStructuredText"
 

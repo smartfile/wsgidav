@@ -84,9 +84,9 @@ import sys
 #import mimetypes
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO #@UnusedImport
+    from io import StringIO #@UnusedImport
 from wsgidav.dav_provider import DAVProvider, _DAVResource
 from wsgidav import util
 
@@ -96,7 +96,7 @@ try:
     from mercurial import commands, hg
     #from mercurial import util as hgutil 
 except ImportError:
-    print >>sys.stderr, "Could not import Mercurial API. Try 'easy_install -U mercurial'."
+    print("Could not import Mercurial API. Try 'easy_install -U mercurial'.", file=sys.stderr)
     raise
 
 __docformat__ = "reStructuredText en"
@@ -191,7 +191,7 @@ class HgResource(_DAVResource):
         assert self.isCollection
         cache = self.environ["wsgidav.hg.cache"][str(self.rev)]
         dirinfos = cache["dirinfos"] 
-        if not dirinfos.has_key(self.localHgPath):
+        if self.localHgPath not in dirinfos:
             return []
         return dirinfos[self.localHgPath][0] + dirinfos[self.localHgPath][1] 
 #        return self.provider._listMembers(self.path)
@@ -407,7 +407,7 @@ class HgResourceProvider(DAVProvider):
     def __init__(self, repoRoot):
         super(HgResourceProvider, self).__init__()
         self.repoRoot = repoRoot
-        print "Mercurial version %s" % hgversion
+        print("Mercurial version %s" % hgversion)
         self.ui = mercurial.ui.ui()
         self.repo = hg.repository(self.ui, repoRoot)
         self.ui.status("Connected to repository %s\n" % self.repo.root)
@@ -424,20 +424,20 @@ class HgResourceProvider(DAVProvider):
         commands.verify(self.ui, self.repo)
         
 #        self.ui.status("Changelog: %s\n" % self.repo.changelog)
-        print "Status:"
+        print("Status:")
         pprint(self.repo.status())
         self.repo.ui.status("the default username to be used in commits: %s\n" % self.repo.ui.username())
 #        self.repo.ui.status("a short form of user name USER %s\n" % self.repo.ui.shortuser(user))
         self.ui.status("Expandpath: %s\n" % self.repo.ui.expandpath(repoRoot))
         
-        print "Working directory state summary:"
+        print("Working directory state summary:")
         self.ui.pushbuffer()
         commands.summary(self.ui, self.repo, remote=False)
         res = self.ui.popbuffer().strip()
         reslines = [ tuple(line.split(":", 1)) for line in res.split("\n")]
         pprint(reslines)
 
-        print "Repository state summary:"
+        print("Repository state summary:")
         self.ui.pushbuffer()
         commands.identify(self.ui, self.repo, 
                           num=True, id=True, branch=True, tags=True)

@@ -170,10 +170,10 @@ class NTDomainController(object):
                 for userinfo in users:
                     uiname = userinfo.get("name")
                     assert uiname
-                    assert isinstance(uiname, unicode)
+                    assert isinstance(uiname, str)
                     if un == userinfo["name"].lower():
                         return True
-            except win32net.error, e:
+            except win32net.error as e:
                 _logger.exception("NetUserEnum: %s" % e)
                 return False
         _logger.info("User '%s' not found on server '%s'" % (username, server))
@@ -186,7 +186,7 @@ class NTDomainController(object):
         
         try:
             htoken = win32security.LogonUser(username, domain, password, win32security.LOGON32_LOGON_NETWORK, win32security.LOGON32_PROVIDER_DEFAULT)
-        except win32security.error, err:
+        except win32security.error as err:
             _logger.warning("LogonUser failed for user '%s': %s" % (username, err))
             return False
         else:

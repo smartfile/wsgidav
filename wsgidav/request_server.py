@@ -8,17 +8,17 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 
 .. _`Developers info`: http://wsgidav.readthedocs.org/en/latest/develop.html  
 """
-from urlparse import urlparse
+from urllib.parse import urlparse
 from wsgidav.dav_error import HTTP_OK, HTTP_LENGTH_REQUIRED
 from wsgidav import xml_tools
-import util
-import urllib
+from . import util
+import urllib.request, urllib.parse, urllib.error
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO #@UnusedImport
+    from io import StringIO #@UnusedImport
 
-from dav_error import DAVError, asDAVError, \
+from .dav_error import DAVError, asDAVError, \
     HTTP_BAD_REQUEST,\
     HTTP_NOT_IMPLEMENTED, HTTP_NOT_FOUND, HTTP_FORBIDDEN, HTTP_INTERNAL_ERROR,\
     HTTP_FAILED_DEPENDENCY, HTTP_METHOD_NOT_ALLOWED,\
@@ -31,7 +31,7 @@ from dav_error import DAVError, asDAVError, \
 #import lock_manager
 
 # Trick PyDev to do intellisense and don't produce warnings:
-from util import etree #@UnusedImport
+from .util import etree #@UnusedImport
 if False: from xml.etree import ElementTree as etree     #@Reimport
    
 __docformat__ = "reStructuredText"
@@ -395,7 +395,7 @@ class RequestServer(object):
         for (propname, propvalue) in propupdatelist:
             try:         
                 res.setPropertyValue(propname, propvalue, dryRun=True)
-            except Exception, e:
+            except Exception as e:
                 writeresult = asDAVError(e)
             else:
                 writeresult = "200 OK"
@@ -424,7 +424,7 @@ class RequestServer(object):
                     res.setPropertyValue(propname, propvalue, dryRun=False)
                     # Set value to None, so the response xml contains empty tags
                     propResponseList.append( (propname, None) )
-                except Exception, e:
+                except Exception as e:
                     e = asDAVError(e)
                     propResponseList.append( (propname, e) )
                     responsedescription.append(e.getUserInfo())
@@ -542,7 +542,7 @@ class RequestServer(object):
             if type(handled) is list:
                 errorList = handled
                 handled = True
-        except Exception, e:
+        except Exception as e:
             errorList = [ (res.getHref(), asDAVError(e)) ]
             handled = True
         if handled:
@@ -571,7 +571,7 @@ class RequestServer(object):
             if not hasConflicts:
                 try:
                     errorList = res.delete()
-                except Exception, e:
+                except Exception as e:
                     errorList = [ (res.getHref(), asDAVError(e)) ]
                 return self._sendResponse(environ, start_response, 
                                           res, HTTP_NO_CONTENT, errorList)
@@ -596,7 +596,7 @@ class RequestServer(object):
                 if provider.exists(childRes.path, environ):
                     raise DAVError(HTTP_INTERNAL_ERROR, 
                                    "Resource could not be deleted.")
-            except Exception, e:
+            except Exception as e:
                 errorList.append( (childRes.getHref(), asDAVError(e)) )
                 ignoreDict[util.getUriParent(childRes.path)] = True
 
@@ -644,7 +644,7 @@ class RequestServer(object):
         # Content-Length may be 0 or greater. (Set to -1 if missing or invalid.) 
 #        WORKAROUND_BAD_LENGTH = True
         try:
-            contentlength = max(-1, long(environ.get("CONTENT_LENGTH", -1)))
+            contentlength = max(-1, int(environ.get("CONTENT_LENGTH", -1)))
         except ValueError: 
             contentlength = -1
         
@@ -729,7 +729,7 @@ class RequestServer(object):
                      
             fileobj.close()
 
-        except Exception, e:
+        except Exception as e:
             res.endWrite(withErrors=True)
             _logger.exception("PUT: byte copy failed")
             self._fail(e)
@@ -809,7 +809,7 @@ class RequestServer(object):
 
         fixed_http_dest = environ["HTTP_DESTINATION"].replace("%25", "%")
         environ["HTTP_DESTINATION"] = fixed_http_dest
-        destinationHeader = urllib.unquote(environ["HTTP_DESTINATION"])
+        destinationHeader = urllib.parse.unquote(environ["HTTP_DESTINATION"])
 
         # Return fragments as part of <path>
         # Fixes litmus -> running `basic': 9. delete_fragment....... WARNING: DELETE removed collection resource withRequest-URI including fragment; unsafe
@@ -876,7 +876,7 @@ class RequestServer(object):
             if type(handled) is list:
                 errorList = handled
                 handled = True
-        except Exception, e:
+        except Exception as e:
             errorList = [ (srcRes.getHref(), asDAVError(e)) ]
             handled = True
         if handled:
@@ -938,7 +938,7 @@ class RequestServer(object):
                 try:
                     _logger.debug("Recursive move: %s -> '%s'" % (srcRes, destPath))
                     errorList = srcRes.moveRecursive(destPath)
-                except Exception, e:
+                except Exception as e:
                     errorList = [ (srcRes.getHref(), asDAVError(e)) ]
                 return self._sendResponse(environ, start_response, 
                                           srcRes, successCode, errorList)
@@ -959,7 +959,7 @@ class RequestServer(object):
         for sRes in srcList:
             # Skip this resource, if there was a failure copying a parent 
             parentError = False
-            for ignorePath in ignoreDict.keys():
+            for ignorePath in list(ignoreDict.keys()):
                 if util.isEqualOrChildUri(ignorePath, sRes.path):
                     parentError = True
                     break
@@ -986,7 +986,7 @@ class RequestServer(object):
                 if isMove and not sRes.isCollection:
                     sRes.delete()
                     
-            except Exception, e:
+            except Exception as e:
                 ignoreDict[sRes.path] = True
                 # TODO: the error-href should be 'most appropriate of the source 
                 # and destination URLs'. So maybe this should be the destination
@@ -1005,7 +1005,7 @@ class RequestServer(object):
                     continue
                 # Skip collections that contain errors (unmoved resources)   
                 childError = False
-                for ignorePath in ignoreDict.keys():
+                for ignorePath in list(ignoreDict.keys()):
                     if util.isEqualOrChildUri(sRes.path, ignorePath):
                         childError = True
                         break
@@ -1017,7 +1017,7 @@ class RequestServer(object):
 #                    _logger.debug("Remove source after move: %s" % sRes)
                     util.status("Remove collection after move: %s" % sRes)
                     sRes.delete()
-                except Exception, e:
+                except Exception as e:
                     errorList.append( (srcRes.getHref(), asDAVError(e)) )
             util.status("ErrorList", var=errorList)
                 
@@ -1407,7 +1407,7 @@ class RequestServer(object):
             # behaviour changes in future
             (rangestart, rangeend, rangelength) = listRanges[0]
         else:
-            (rangestart, rangeend, rangelength) = (0L, filesize - 1, filesize)
+            (rangestart, rangeend, rangelength) = (0, filesize - 1, filesize)
 
         ## Content Processing 
         mimetype = res.getContentType()  #provider.getContentType(path)

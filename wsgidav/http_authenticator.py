@@ -87,9 +87,9 @@ except ImportError:
     from md5 import md5
 import time
 import re
-import util
-from domain_controller import WsgiDAVDomainController
-from middleware import BaseMiddleware
+from . import util
+from .domain_controller import WsgiDAVDomainController
+from .middleware import BaseMiddleware
 
 _logger = util.getModuleLogger(__name__, True)
 

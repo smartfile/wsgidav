@@ -13,7 +13,7 @@ def run():
     if not "--reload" in args:
         args.append("--reload")
 
-    print "run_reloading_server", args 
+    print(("run_reloading_server", args)) 
 
     try:
         serverpath = os.path.join(os.path.dirname(__file__), "run_server.py")
@@ -31,11 +31,11 @@ def run():
             sys.stderr = sys.__stderr__
             
             if p.returncode == 3:
-                print "run_server returned 3: restarting..."
+                print("run_server returned 3: restarting...")
             else:
-                print "run_server returned %s: terminating." % p.returncode
+                print(("run_server returned %s: terminating." % p.returncode))
                 break
-    except Exception, e:
+    except Exception as e:
         raise e
     
     

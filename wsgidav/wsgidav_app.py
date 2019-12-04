@@ -41,21 +41,21 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 
 .. _`Developers info`: http://wsgidav.readthedocs.org/en/latest/develop.html  
 """
-from fs_dav_provider import FilesystemProvider
+from .fs_dav_provider import FilesystemProvider
 from wsgidav.dir_browser import WsgiDavDirBrowser
 from wsgidav.dav_provider import DAVProvider
 from wsgidav.lock_storage import LockStorageDict
 import time
 import sys
 import threading
-import urllib
-import util
-from error_printer import ErrorPrinter
-from debug_filter import WsgiDavDebugFilter
-from http_authenticator import HTTPAuthenticator
-from request_resolver import RequestResolver
-from property_manager import PropertyManager
-from lock_manager import LockManager
+import urllib.request, urllib.parse, urllib.error
+from . import util
+from .error_printer import ErrorPrinter
+from .debug_filter import WsgiDavDebugFilter
+from .http_authenticator import HTTPAuthenticator
+from .request_resolver import RequestResolver
+from .property_manager import PropertyManager
+from .lock_manager import LockManager
 #from wsgidav.version import __version__
 
 __docformat__ = "reStructuredText"
@@ -168,13 +168,13 @@ class WsgiDAVApp(object):
          
         # Instantiate DAV resource provider objects for every share
         self.providerMap = {}
-        for (share, provider) in provider_mapping.items():
+        for (share, provider) in list(provider_mapping.items()):
             # Make sure share starts with, or is, '/' 
             share = "/" + share.strip("/")
 
             # We allow a simple string as 'provider'. In this case we interpret 
             # it as a file system root folder that is published. 
-            if isinstance(provider, basestring):
+            if isinstance(provider, str):
                 provider = FilesystemProvider(provider)
 
             assert isinstance(provider, DAVProvider)
@@ -201,39 +201,39 @@ class WsgiDAVApp(object):
         
         # Replace WsgiDavDirBrowser to custom class for backward compatibility only
         # In normal way you should insert it into middleware_stack
-        if dir_browser.get("enable", True) and "app_class" in dir_browser.keys():
+        if dir_browser.get("enable", True) and "app_class" in list(dir_browser.keys()):
             config["middleware_stack"] = [m if m != WsgiDavDirBrowser else dir_browser['app_class'] for m in middleware_stack]
 
         for mw in middleware_stack:
             if mw.isSuitable(config):
                 if self._verbose >= 2:
-                        print "Middleware %s is suitable" % mw
+                        print("Middleware %s is suitable" % mw)
                 application = mw(application, config)
                 
                 if issubclass(mw, HTTPAuthenticator):
                     domain_controller = application.getDomainController()
                     # check anonymous access
-                    for share, data in self.providerMap.items():
+                    for share, data in list(self.providerMap.items()):
                         if application.allowAnonymousAccess(share):
                             data['allow_anonymous'] = True
             else:
                 if self._verbose >= 2:
-                        print "Middleware %s is not suitable" % mw
+                        print("Middleware %s is not suitable" % mw)
                     
         # Print info
         if self._verbose >= 2:
-            print "Using lock manager: %r" % locksManager
-            print "Using property manager: %r" % propsManager
-            print "Using domain controller: %s" % domain_controller
-            print "Registered DAV providers:"
-            for share, data in self.providerMap.items():
+            print("Using lock manager: %r" % locksManager)
+            print("Using property manager: %r" % propsManager)
+            print("Using domain controller: %s" % domain_controller)
+            print("Registered DAV providers:")
+            for share, data in list(self.providerMap.items()):
                 hint = " (anonymous)" if data['allow_anonymous'] else ""
-                print "  Share '%s': %s%s" % (share, provider, hint)
+                print("  Share '%s': %s%s" % (share, provider, hint))
         if self._verbose >= 1:
-            for share, data in self.providerMap.items():
+            for share, data in list(self.providerMap.items()):
                 if data['allow_anonymous']:
                     # TODO: we should only warn here, if --no-auth is not given
-                    print "WARNING: share '%s' will allow anonymous access." % share
+                    print("WARNING: share '%s' will allow anonymous access." % share)
 
         self._application = application
 
@@ -246,9 +246,9 @@ class WsgiDAVApp(object):
         # done by the server (#8).
         path = environ["PATH_INFO"]
         if self.config.get("unquote_path_info", False):
-            path = urllib.unquote(environ["PATH_INFO"])
+            path = urllib.parse.unquote(environ["PATH_INFO"])
         # GC issue 22: Pylons sends root as u'/' 
-        if isinstance(path, unicode):
+        if isinstance(path, str):
             util.log("Got unicode PATH_INFO: %r" % path)
             path = path.encode("utf8")
 
@@ -260,7 +260,7 @@ class WsgiDAVApp(object):
         ## Find DAV provider that matches the share
 
         # sorting share list by reverse length
-        shareList = self.providerMap.keys()
+        shareList = list(self.providerMap.keys())
         shareList.sort(key=len, reverse=True)
 
         share = None 
@@ -383,7 +383,7 @@ class WsgiDAVApp(object):
 #               This is the CherryPy format:     
 #                127.0.0.1 - - [08/Jul/2009:17:25:23] "GET /loginPrompt?redirect=/renderActionList%3Frelation%3Dpersonal%26key%3D%26filter%3DprivateSchedule&reason=0 HTTP/1.1" 200 1944 "http://127.0.0.1:8002/command?id=CMD_Schedule" "Mozilla/5.0 (Windows; U; Windows NT 6.0; de; rv:1.9.1) Gecko/20090624 Firefox/3.5"
 #                print >>sys.stderr, '%s - %s - [%s] "%s" %s -> %s' % (
-                print >>sys.stdout, '%s - %s - [%s] "%s" %s -> %s' % (
+                print('%s - %s - [%s] "%s" %s -> %s' % (
                                         threadInfo + environ.get("REMOTE_ADDR",""),                                                         
                                         userInfo,
                                         util.getLogTime(), 
@@ -392,7 +392,7 @@ class WsgiDAVApp(object):
                                         status,
 #                                        response_headers.get(""), # response Content-Length
                                         # referer
-                                     )
+                                     ), file=sys.stdout)
  
             return start_response(status, response_headers, exc_info)
             

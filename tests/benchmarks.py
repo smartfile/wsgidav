@@ -108,10 +108,10 @@ def run_bench(bench, opts):
     profile_benchmarks = opts["profile_benchmarks"]
     if bench in profile_benchmarks:
         # http://docs.python.org/library/profile.html#module-cProfile
-        import cProfile, pstats, StringIO
+        import cProfile, pstats, io
         prof = cProfile.Profile()
         prof = prof.runctx("_real_run_bench(bench, opts)", globals(), locals())
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         stats = pstats.Stats(prof, stream=stream)
 #        stats.sort_stats("time")  # Or cumulative
         stats.sort_stats("cumulative")  # Or time

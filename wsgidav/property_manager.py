@@ -23,7 +23,7 @@ from wsgidav import util
 import os
 import sys
 import shelve
-from rw_lock import ReadWriteLock
+from .rw_lock import ReadWriteLock
 
 # TODO: comment's from Ian Bicking (2005)
 #@@: Use of shelve means this is only really useful in a threaded environment.
@@ -102,7 +102,7 @@ class PropertyManager(object):
 #                print "%s" % k
 #                print "  -> %s" % self._dict[k]
 #            self._dump()
-            for k, v in self._dict.items():
+            for k, v in list(self._dict.items()):
                 _ = "%s, %s" % (k, v)
 #            _logger.debug("%s checks ok %s" % (self.__class__.__name__, msg))
             return True
@@ -117,21 +117,21 @@ class PropertyManager(object):
     def _dump(self, msg="", out=None):
         if out is None:
             out = sys.stdout
-        print >>out, "%s(%s): %s" % (self.__class__.__name__, self.__repr__(), msg)
+        print("%s(%s): %s" % (self.__class__.__name__, self.__repr__(), msg), file=out)
         if not self._loaded:
             self._lazyOpen()
             if self._verbose >= 2:
                 return # Already dumped in _lazyOpen
         try:
-            for k, v in self._dict.items():
-                print >>out, "    ", k
-                for k2, v2 in v.items():
+            for k, v in list(self._dict.items()):
+                print("    ", k, file=out)
+                for k2, v2 in list(v.items()):
                     try:
-                        print >>out, "        %s: '%s'" % (k2, v2)
-                    except Exception, e:
-                        print >>out, "        %s: ERROR %s" % (k2, e)
+                        print("        %s: '%s'" % (k2, v2), file=out)
+                    except Exception as e:
+                        print("        %s: ERROR %s" % (k2, e), file=out)
             out.flush()
-        except Exception, e:
+        except Exception as e:
             util.warn("PropertyManager._dump()  ERROR: %s" % e)
 
 
@@ -143,7 +143,7 @@ class PropertyManager(object):
                 self._lazyOpen()        
             returnlist = []
             if normurl in self._dict:
-                for propdata in self._dict[normurl].keys():
+                for propdata in list(self._dict[normurl].keys()):
                     returnlist.append(propdata)
             return returnlist
         finally:
@@ -161,7 +161,7 @@ class PropertyManager(object):
             # TODO: sometimes we get exceptions here: (catch or otherwise make more robust?)
             try:
                 resourceprops = self._dict[normurl]
-            except Exception, e:
+            except Exception as e:
                 _logger.exception("getProperty(%s, %s) failed : %s" % (normurl, propname, e))
                 raise
             return resourceprops.get(propname)
@@ -262,7 +262,7 @@ class PropertyManager(object):
                 self._lazyOpen()
             if withChildren:
                 # Move srcurl\*      
-                for url in self._dict.keys():
+                for url in list(self._dict.keys()):
                     if util.isEqualOrChildUri(srcurl, url):
                         d = url.replace(srcurl, desturl)
                         self._dict[d] = self._dict[url]

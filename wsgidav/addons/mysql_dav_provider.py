@@ -68,9 +68,9 @@ import md5
 import time
 import csv
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 __docformat__ = "reStructuredText"
 
@@ -443,7 +443,7 @@ class MySQLBrowserProvider(DAVProvider):
         if row is None:
             cursor.close()
             return None
-        for fname in row.keys():
+        for fname in list(row.keys()):
             dictRet[fname] = str(row[fname])         
         cursor.close()
         return dictRet            

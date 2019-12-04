@@ -79,14 +79,14 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 import sys
 import time
 import traceback
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from wsgidav import util, xml_tools
 # Trick PyDev to do intellisense and don't produce warnings:
-from util import etree #@UnusedImport
+from .util import etree #@UnusedImport
 import os
 if False: from xml.etree import ElementTree as etree     #@Reimport @UnresolvedImport
 
-from dav_error import DAVError, \
+from .dav_error import DAVError, \
     HTTP_NOT_FOUND, HTTP_FORBIDDEN,\
     PRECONDITION_CODE_ProtectedProperty, asDAVError
 
@@ -353,7 +353,7 @@ class _DAVResource(object):
 
         See also comments in DEVELOPERS.txt glossary.
         """
-        return urllib.quote(self.provider.sharePath + self.getPreferredPath())
+        return urllib.parse.quote(self.provider.sharePath + self.getPreferredPath())
 
 #    def getRefKey(self):
 #        """Return an unambigous identifier string for a resource.
@@ -381,7 +381,7 @@ class _DAVResource(object):
         # Nautilus chokes, if href encodes '(' as '%28'
         # So we don't encode 'extra' and 'safe' characters (see rfc2068 3.2.1)
         safe = "/" + "!*'()," + "$-_|."
-        return urllib.quote(self.provider.mountPath + self.provider.sharePath 
+        return urllib.parse.quote(self.provider.mountPath + self.provider.sharePath 
                             + self.getPreferredPath(), safe=safe)
 
 
@@ -550,9 +550,9 @@ class _DAVResource(object):
                 else:
                     value = self.getPropertyValue(name)
                     propList.append( (name, value) )
-            except DAVError, e:
+            except DAVError as e:
                 propList.append( (name, e) )
-            except Exception, e:
+            except Exception as e:
                 propList.append( (name, asDAVError(e)) )
                 if self.provider.verbose >= 2:
                     traceback.print_exc(10, sys.stdout)  
@@ -609,7 +609,7 @@ class _DAVResource(object):
                 if timeout < 0:
                     timeout =  "Infinite"
                 else:
-                    timeout = "Second-" + str(long(timeout - time.time())) 
+                    timeout = "Second-" + str(int(timeout - time.time())) 
                 etree.SubElement(activelockEL, "{DAV:}timeout").text = timeout
                 
                 locktokenEL = etree.SubElement(activelockEL, "{DAV:}locktoken")
@@ -1362,7 +1362,7 @@ class DAVProvider(object):
         
         @param sharePath: a UTF-8 encoded, unquoted byte string.
         """
-        if isinstance(sharePath, unicode):
+        if isinstance(sharePath, str):
             sharePath = sharePath.encode("utf8")
         assert sharePath=="" or sharePath.startswith("/")
         if sharePath == "/":
@@ -1383,7 +1383,7 @@ class DAVProvider(object):
         
         Used to calculate the <path> from a storage key by inverting getRefUrl().
         """
-        return "/" + urllib.unquote(util.lstripstr(refUrl, self.sharePath)).lstrip("/")
+        return "/" + urllib.parse.unquote(util.lstripstr(refUrl, self.sharePath)).lstrip("/")
 
     def getResourceInst(self, path, environ):
         """Return a _DAVResource object for path.

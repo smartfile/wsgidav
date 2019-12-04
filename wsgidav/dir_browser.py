@@ -10,11 +10,11 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 """
 from wsgidav.dav_error import DAVError, HTTP_OK, HTTP_MEDIATYPE_NOT_SUPPORTED
 from wsgidav.version import __version__
-from middleware import BaseMiddleware
+from .middleware import BaseMiddleware
 import os
 import sys
-import urllib
-import util
+import urllib.request, urllib.parse, urllib.error
+from . import util
 
 __docformat__ = "reStructuredText"
 
@@ -27,7 +27,7 @@ msOfficeTypeToExtMap = {
     "visio": ("vsd", "vsdm", "vsdx", "vstm", "vstx"),
 }
 msOfficeExtToTypeMap = {}
-for t, el in msOfficeTypeToExtMap.iteritems():
+for t, el in msOfficeTypeToExtMap.items():
     for e in el:
         msOfficeExtToTypeMap[e] = t
 
@@ -177,7 +177,7 @@ class WsgiDavDirBrowser(BaseMiddleware):
         """Wrapper to raise (and log) DAVError."""
         e = DAVError(value, contextinfo, srcexception, errcondition)
         if self._verbose >= 2:
-            print >>sys.stdout, "Raising DAVError %s" % e.getUserInfo()
+            print("Raising DAVError %s" % e.getUserInfo(), file=sys.stdout)
         raise e
 
     
@@ -188,7 +188,7 @@ class WsgiDavDirBrowser(BaseMiddleware):
         assert davres.isCollection
         
         dirConfig = environ["wsgidav.config"].get("dir_browser", {})
-        displaypath = urllib.unquote(davres.getHref())
+        displaypath = urllib.parse.unquote(davres.getHref())
         isReadOnly = environ["wsgidav.provider"].isReadOnly()
 
         trailer = dirConfig.get("response_trailer")

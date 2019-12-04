@@ -16,10 +16,10 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 from wsgidav.lock_manager import normalizeLockRoot, lockString,\
     generateLockToken, validateLock
 import os
-import util
+from . import util
 import shelve
 import time
-from rw_lock import ReadWriteLock
+from .rw_lock import ReadWriteLock
 
 __docformat__ = "reStructuredText"
 
@@ -322,7 +322,7 @@ class LockStorageDict(object):
                 __appendLocks(tokList)
 
             if includeChildren:
-                for u, ltoks in self._dict.items():
+                for u, ltoks in list(self._dict.items()):
                     if util.isChildUri(key, u):
                         __appendLocks(ltoks)
 

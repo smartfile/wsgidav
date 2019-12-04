@@ -18,7 +18,7 @@
 # - Added (tag, value) syntax to object_to_etree 
 # - Added checkResponse()
 
-import urlparse, httplib, copy, base64, StringIO
+import urllib.parse, http.client, copy, base64, io
 
 try:
     from xml.etree import ElementTree
@@ -43,7 +43,7 @@ def object_to_etree(parent, obj, namespace=''):
         
     elif type(obj) is dict:
         # If the object is a dictionary we'll need to parse it and send it back recusively
-        for key, value in obj.items():
+        for key, value in list(obj.items()):
             if key.startswith('{') is False:
                 key_etree = ElementTree.SubElement(parent, '{%s}%s' % (namespace, key))
                 object_to_etree(key_etree, value, namespace=namespace)
@@ -62,7 +62,7 @@ def object_to_etree(parent, obj, namespace=''):
             
     else:
         # If it's none of previous types then raise
-        raise TypeError, '%s is an unsupported type' % type(obj)
+        raise TypeError('%s is an unsupported type' % type(obj))
         
 
 class DAVClient(object):
@@ -70,7 +70,7 @@ class DAVClient(object):
     def __init__(self, url='http://localhost:8080'):
         """Initialization"""
         
-        self._url = urlparse.urlparse(url)
+        self._url = urllib.parse.urlparse(url)
         
         self.headers = {'Host':self._url[1], 
                         'User-Agent': 'python.davclient.DAVClient/0.1'} 
@@ -94,11 +94,11 @@ class DAVClient(object):
                         }
 
         if self._url.scheme == 'http':
-            self._connection = httplib.HTTPConnection(self._url[1])
+            self._connection = http.client.HTTPConnection(self._url[1])
         elif self._url.scheme == 'https':
-            self._connection = httplib.HTTPSConnection(self._url[1])
+            self._connection = http.client.HTTPSConnection(self._url[1])
         else:
-            raise Exception, 'Unsupported scheme'
+            raise Exception('Unsupported scheme')
         
         self._connection.request(method, path, body, headers)
             
@@ -184,7 +184,7 @@ class DAVClient(object):
             headers = {}
         headers['Content-Type'] = 'text/xml; charset="utf-8"'
         
-        self.copy(source, destination, body=unicode(body, 'utf-8'), depth=depth, overwrite=overwrite, headers=headers)
+        self.copy(source, destination, body=str(body, 'utf-8'), depth=depth, overwrite=overwrite, headers=headers)
         
         
     def move(self, source, destination, body=None, depth='infinity', overwrite=True, headers=None):
@@ -214,7 +214,7 @@ class DAVClient(object):
             headers = {}
         headers['Content-Type'] = 'text/xml; charset="utf-8"'
 
-        self.move(source, destination, unicode(body, 'utf-8'), depth=depth, overwrite=overwrite, headers=headers)
+        self.move(source, destination, str(body, 'utf-8'), depth=depth, overwrite=overwrite, headers=headers)
         
         
     def propfind(self, path, properties='allprop', namespace='DAV:', depth=None, headers=None):
@@ -229,7 +229,7 @@ class DAVClient(object):
         tree = ElementTree.ElementTree(root)
         
         # Etree won't just return a normal string, so we have to do this
-        body = StringIO.StringIO()
+        body = io.StringIO()
         tree.write(body)
         body = body.getvalue()
                 
@@ -241,7 +241,7 @@ class DAVClient(object):
         headers['Content-Type'] = 'text/xml; charset="utf-8"'
         
         # Body encoding must be utf-8, 207 is proper response
-        self._request('PROPFIND', path, body=unicode('<?xml version="1.0" encoding="utf-8" ?>\n'+body, 'utf-8'), headers=headers)
+        self._request('PROPFIND', path, body=str('<?xml version="1.0" encoding="utf-8" ?>\n'+body, 'utf-8'), headers=headers)
         
         if self.response is not None and hasattr(self.response, 'tree') is True:
             property_responses = {}
@@ -284,7 +284,7 @@ class DAVClient(object):
         
         tree = ElementTree.ElementTree(root)
         # Etree won't just return a normal string, so we have to do this
-        body = StringIO.StringIO()
+        body = io.StringIO()
         tree.write(body)
         body = body.getvalue()
 
@@ -293,7 +293,7 @@ class DAVClient(object):
             headers = {}
         headers['Content-Type'] = 'text/xml; charset="utf-8"'
         
-        self._request('PROPPATCH', path, body=unicode('<?xml version="1.0" encoding="utf-8" ?>\n'+body, 'utf-8'), headers=headers)
+        self._request('PROPPATCH', path, body=str('<?xml version="1.0" encoding="utf-8" ?>\n'+body, 'utf-8'), headers=headers)
         
         
     def set_lock(self, path, owner, locktype='write', lockscope='exclusive', depth=None, headers=None):
@@ -311,11 +311,11 @@ class DAVClient(object):
         headers['Timeout'] = 'Infinite, Second-4100000000'
         
         # Etree won't just return a normal string, so we have to do this
-        body = StringIO.StringIO()
+        body = io.StringIO()
         tree.write(body)
         body = body.getvalue()
                 
-        self._request('LOCK', path, body=unicode('<?xml version="1.0" encoding="utf-8" ?>\n'+body, 'utf-8'), headers=headers)
+        self._request('LOCK', path, body=str('<?xml version="1.0" encoding="utf-8" ?>\n'+body, 'utf-8'), headers=headers)
         
         locks = self.response.tree.findall('.//{DAV:}locktoken')
         lock_list = []
@@ -354,7 +354,7 @@ class DAVClient(object):
         full_status = "%s %s" % (res.status, res.reason)
 
         # Check response Content_Length
-        content_length = long(res.getheader("content-length", 0))
+        content_length = int(res.getheader("content-length", 0))
         if content_length and len(res.body) != content_length:
             raise AppError("Mismatch: Content_Length(%s) != len(body)(%s)" % (content_length, len(res.body)))
 
@@ -401,6 +401,6 @@ class DAVClient(object):
             # 'HTTP/1.1 200 OK' -> 200
             statuscode = int(stat.text.split(" ", 2)[1])
             responses.setdefault(statuscode, []).append(href.text)
-        for statuscode, hrefs in responses.items():
+        for statuscode, hrefs in list(responses.items()):
             if not statuscode in expect_status:
                 raise AppError("Invalid multistatus %s for %s (expected %s)\n%s" % (statuscode, hrefs, expect_status, responses))

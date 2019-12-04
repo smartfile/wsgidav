@@ -55,19 +55,19 @@ __docformat__ = "reStructuredText"
 
 from wsgidav.version import __version__
 import time
-import httplib
+import http.client
 import socket
 import threading
 
 
-import SocketServer, BaseHTTPServer, urlparse
+import socketserver, http.server, urllib.parse
 import sys, logging
 import traceback
 from wsgidav import util
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 _logger = util.getModuleLogger(__name__)
 
@@ -84,7 +84,7 @@ SERVER_ERROR = """\
 </html>
 """
 
-class ExtHandler (BaseHTTPServer.BaseHTTPRequestHandler):
+class ExtHandler (http.server.BaseHTTPRequestHandler):
     
     _SUPPORTED_METHODS = ["HEAD", "GET", "PUT", "POST", "OPTIONS", "TRACE",
                           "DELETE", "PROPFIND", "PROPPATCH", "MKCOL", "COPY", 
@@ -94,7 +94,7 @@ class ExtHandler (BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     
     server_version = "WsgiDAV/%s %s" % (__version__,
-                                        BaseHTTPServer.BaseHTTPRequestHandler.server_version)
+                                        http.server.BaseHTTPRequestHandler.server_version)
 
     def log_message (self, *args):
         pass
@@ -106,7 +106,7 @@ class ExtHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         
     def getApp (self):
         # We want fragments to be returned as part of <path> 
-        _protocol, _host, path, _parameters, query, _fragment = urlparse.urlparse ("http://dummyhost%s" % self.path, 
+        _protocol, _host, path, _parameters, query, _fragment = urllib.parse.urlparse ("http://dummyhost%s" % self.path, 
                                                                                    allow_fragments=False)
         # Find any application we might have
         for appPath, app in self.server.wsgiApplications:
@@ -167,7 +167,7 @@ class ExtHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                "SERVER_PORT": str(self.server.server_address[1]),
                "SERVER_PROTOCOL": self.request_version,
                }
-        for httpHeader, httpValue in self.headers.items():
+        for httpHeader, httpValue in list(self.headers.items()):
             if not httpHeader.lower() in ("content-type", "content-length"):
                 env ["HTTP_%s" % httpHeader.replace ("-", "_").upper()] = httpValue
 
@@ -230,17 +230,17 @@ class ExtHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             _logger.debug("wsgiWriteData: write %s bytes: '%r'..." % (len(data), data[:50]))
             self.wfile.write(data)
-        except socket.error, e:
+        except socket.error as e:
             # Suppress stack trace when client aborts connection disgracefully:
             # 10053: Software caused connection abort
             # 10054: Connection reset by peer
             if e[0] in (10053, 10054):
-                print >>sys.stderr, "*** Caught socket.error: ", e
+                print("*** Caught socket.error: ", e, file=sys.stderr)
             else:  
                 raise
 
 
-class ExtServer (SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
+class ExtServer (socketserver.ThreadingMixIn, http.server.HTTPServer):
 
     def handle_error(self, request, client_address):
         """Handle an error gracefully.  May be overridden.
@@ -258,12 +258,12 @@ class ExtServer (SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
             return
         # This is what BaseHTTPServer.HTTPServer.handle_error does, but with
         # added thread ID and using stderr
-        print >>sys.stderr, '-'*40
-        print >>sys.stderr, '<%s> Exception happened during processing of request from %s' % (threading._get_ident(), client_address)
-        print >>sys.stderr, client_address
+        print('-'*40, file=sys.stderr)
+        print('<%s> Exception happened during processing of request from %s' % (threading._get_ident(), client_address), file=sys.stderr)
+        print(client_address, file=sys.stderr)
         traceback.print_exc()
-        print >>sys.stderr, '-'*40
-        print >>sys.stderr, request
+        print('-'*40, file=sys.stderr)
+        print(request, file=sys.stderr)
 #        BaseHTTPServer.HTTPServer.handle_error(self, request, client_address)
 
 
@@ -295,7 +295,7 @@ class ExtServer (SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
         # Send request, so socket is unblocked
         (host, port) = self.server_address
 #        print "stop_serve_forever() sending %s:%s/ SHUTDOWN..." % (host, port)
-        conn = httplib.HTTPConnection("%s:%d" % (host, port))
+        conn = http.client.HTTPConnection("%s:%d" % (host, port))
         conn.request("SHUTDOWN", "/")
 #        print "stop_serve_forever() sent SHUTDOWN request, reading response..."
         conn.getresponse()
@@ -319,9 +319,9 @@ class ExtServer (SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
 
 
     def __init__ (self, serverAddress, wsgiApplications, serveFiles=1):
-        BaseHTTPServer.HTTPServer.__init__ (self, serverAddress, ExtHandler)
+        http.server.HTTPServer.__init__ (self, serverAddress, ExtHandler)
         appList = []
-        for urlPath, wsgiApp in wsgiApplications.items():
+        for urlPath, wsgiApp in list(wsgiApplications.items()):
             appList.append ((urlPath, wsgiApp))
         self.wsgiApplications = appList
         self.serveFiles = serveFiles
@@ -335,9 +335,9 @@ def serve(conf, app):
     if conf.get("verbose") >= 1:
         if host in ("", "0.0.0.0"):
             (hostname, _aliaslist, ipaddrlist) = socket.gethostbyname_ex(socket.gethostname())
-            print "WsgiDAV %s serving at %s, port %s (host='%s' %s)..." % (__version__, host, port, hostname, ipaddrlist)
+            print("WsgiDAV %s serving at %s, port %s (host='%s' %s)..." % (__version__, host, port, hostname, ipaddrlist))
         else:
-            print "WsgiDAV %s serving at %s, port %s..." % (__version__, host, port)
+            print("WsgiDAV %s serving at %s, port %s..." % (__version__, host, port))
     server.serve_forever()
 #    server.serve_forever_stoppable()
 

@@ -81,7 +81,7 @@ import os
 try:
     import queue
 except:
-    import Queue as queue
+    import queue as queue
 import re
 import email.utils
 import socket
@@ -101,15 +101,15 @@ from traceback import format_exc
 if sys.version_info >= (3, 0):
     bytestr = bytes
     unicodestr = str
-    basestring = (bytes, str)
+    str = (bytes, str)
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given encoding."""
         # In Python 3, the native string type is unicode
         return n.encode(encoding)
 else:
     bytestr = str
-    unicodestr = unicode
-    basestring = basestring
+    unicodestr = str
+    str = str
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given encoding."""
         # In Python 2, the native string type is bytes. Assume it's already
@@ -290,8 +290,8 @@ class SizeCheckWrapper(object):
         self._check_length()
         return data
 
-    def next(self):
-        data = self.rfile.next()
+    def __next__(self):
+        data = next(self.rfile)
         self.bytes_read += len(data)
         self._check_length()
         return data
@@ -1438,19 +1438,19 @@ class HTTPServer(object):
             'Threads Idle': lambda s: getattr(self.requests, "idle", None),
             'Socket Errors': 0,
             'Requests': lambda s: (not s['Enabled']) and -1 or sum([w['Requests'](w) for w
-                                       in s['Worker Threads'].values()], 0),
+                                       in list(s['Worker Threads'].values())], 0),
             'Bytes Read': lambda s: (not s['Enabled']) and -1 or sum([w['Bytes Read'](w) for w
-                                         in s['Worker Threads'].values()], 0),
+                                         in list(s['Worker Threads'].values())], 0),
             'Bytes Written': lambda s: (not s['Enabled']) and -1 or sum([w['Bytes Written'](w) for w
-                                            in s['Worker Threads'].values()], 0),
+                                            in list(s['Worker Threads'].values())], 0),
             'Work Time': lambda s: (not s['Enabled']) and -1 or sum([w['Work Time'](w) for w
-                                         in s['Worker Threads'].values()], 0),
+                                         in list(s['Worker Threads'].values())], 0),
             'Read Throughput': lambda s: (not s['Enabled']) and -1 or sum(
                 [w['Bytes Read'](w) / (w['Work Time'](w) or 1e-6)
-                 for w in s['Worker Threads'].values()], 0),
+                 for w in list(s['Worker Threads'].values())], 0),
             'Write Throughput': lambda s: (not s['Enabled']) and -1 or sum(
                 [w['Bytes Written'](w) / (w['Work Time'](w) or 1e-6)
-                 for w in s['Worker Threads'].values()], 0),
+                 for w in list(s['Worker Threads'].values())], 0),
             'Worker Threads': {},
             }
         logging.statistics["CherryPy HTTPServer %d" % id(self)] = self.stats
@@ -1507,7 +1507,7 @@ class HTTPServer(object):
             self.software = "%s Server" % self.version
 
         # Select the appropriate socket
-        if isinstance(self.bind_addr, basestring):
+        if isinstance(self.bind_addr, str):
             # AF_UNIX socket
 
             # So we can reuse the socket...
@@ -1650,7 +1650,7 @@ class HTTPServer(object):
 
             conn = self.ConnectionClass(self, s, makefile)
 
-            if not isinstance(self.bind_addr, basestring):
+            if not isinstance(self.bind_addr, str):
                 # optional values
                 # Until we do DNS lookups, omit REMOTE_HOST
                 if addr is None: # sometimes this can happen
@@ -1711,7 +1711,7 @@ class HTTPServer(object):
 
         sock = getattr(self, "socket", None)
         if sock:
-            if not isinstance(self.bind_addr, basestring):
+            if not isinstance(self.bind_addr, str):
                 # Touch our own socket to make accept() return immediately.
                 try:
                     host, port = sock.getsockname()[:2]
@@ -1767,7 +1767,7 @@ ssl_adapters = {
 def get_ssl_adapter_class(name='builtin'):
     """Return an SSL adapter class for the given name."""
     adapter = ssl_adapters[name.lower()]
-    if isinstance(adapter, basestring):
+    if isinstance(adapter, str):
         last_dot = adapter.rfind(".")
         attr_name = adapter[last_dot + 1:]
         mod_path = adapter[:last_dot]
@@ -1956,7 +1956,7 @@ class WSGIGateway_10(WSGIGateway):
             'wsgi.version': (1, 0),
             }
 
-        if isinstance(req.server.bind_addr, basestring):
+        if isinstance(req.server.bind_addr, str):
             # AF_UNIX. This isn't really allowed by WSGI, which doesn't
             # address unix domain sockets. But it's better than nothing.
             env["SERVER_PORT"] = ""
@@ -1964,7 +1964,7 @@ class WSGIGateway_10(WSGIGateway):
             env["SERVER_PORT"] = str(req.server.bind_addr[1])
 
         # Request headers
-        for k, v in req.inheaders.items():
+        for k, v in list(req.inheaders.items()):
             k = k.decode('ISO-8859-1').upper().replace("-", "_")
             env["HTTP_" + k] = v.decode('ISO-8859-1')
 

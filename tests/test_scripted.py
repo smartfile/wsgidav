@@ -16,7 +16,7 @@ from wsgidav.server.ext_wsgiutils_server import ExtServer
 import time
 import os
 import unittest
-import davclient #@UnresolvedImport
+from . import davclient #@UnresolvedImport
 from threading import Thread
 
 
@@ -165,7 +165,7 @@ class ServerTest(unittest.TestCase):
         # Big file with 10 MB
         lines = []
         line = "." * (1000-6-len("\n"))
-        for i in xrange(10*1000):
+        for i in range(10*1000):
             lines.append("%04i: %s\n" % (i, line))
         data3 = "".join(lines)
 

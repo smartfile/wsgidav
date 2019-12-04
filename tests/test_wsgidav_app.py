@@ -21,10 +21,10 @@ import unittest
 try:
     from paste.fixture import TestApp  #@UnresolvedImport
 except ImportError:
-    print >>sys.stderr, "*" * 70
-    print >>sys.stderr, "Could not import paste.fixture.TestApp: some tests will fail."
-    print >>sys.stderr, "Try 'pip install Paste' or use 'python setup.py test' to run these tests."
-    print >>sys.stderr, "*" * 70
+    print("*" * 70, file=sys.stderr)
+    print("Could not import paste.fixture.TestApp: some tests will fail.", file=sys.stderr)
+    print("Try 'pip install Paste' or use 'python setup.py test' to run these tests.", file=sys.stderr)
+    print("*" * 70, file=sys.stderr)
     raise
 
 #===============================================================================
@@ -70,7 +70,7 @@ class ServerTest(unittest.TestCase):
 
 
     def tearDown(self):
-        shutil.rmtree(unicode(self.rootpath))
+        shutil.rmtree(str(self.rootpath))
         del self.app
 
 
@@ -100,7 +100,7 @@ class ServerTest(unittest.TestCase):
         # Big file with 10 MB
         lines = []
         line = "." * (1000-6-len("\n"))
-        for i in xrange(10*1000):
+        for i in range(10*1000):
             lines.append("%04i: %s\n" % (i, line))
         data3 = "".join(lines)
 
@@ -149,10 +149,10 @@ class ServerTest(unittest.TestCase):
     def testEncoding(self):
         """Handle special characters."""
         app = self.app
-        uniData = u"This is a file with special characters:\n" \
-            + u"Umlaute(дцья)\n" \
-            + u"Euro(\u20AC)\n" \
-            + u"Male(\u2642)"
+        uniData = "This is a file with special characters:\n" \
+            + "Umlaute(дцья)\n" \
+            + "Euro(\u20AC)\n" \
+            + "Male(\u2642)"
 
         data = uniData.encode("utf8")
 

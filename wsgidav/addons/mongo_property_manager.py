@@ -23,7 +23,7 @@ Valid options are (sample shows defaults)::
 """
 from wsgidav import util
 import pymongo
-from urllib import quote
+from urllib.parse import quote
 
 __docformat__ = "reStructuredText"
 
@@ -96,7 +96,7 @@ class MongoPropertyManager(object):
         doc = self.collection.find_one({"_url": normurl})
         propNames = []
         if doc:
-            for name in doc.keys():
+            for name in list(doc.keys()):
                 if not name in HIDDEN_KEYS:
                     propNames.append(decodeMongoKey(name))
         return propNames

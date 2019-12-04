@@ -78,10 +78,11 @@ __all__ = ['HTTPRequest', 'HTTPConnection', 'HTTPServer',
            'WSGIPathInfoDispatcher', 'get_ssl_adapter_class']
 
 import os
+from functools import reduce
 try:
     import queue
 except:
-    import Queue as queue
+    import queue as queue
 import re
 import rfc822
 import socket
@@ -89,12 +90,12 @@ import sys
 if 'win' in sys.platform and not hasattr(socket, 'IPPROTO_IPV6'):
     socket.IPPROTO_IPV6 = 41
 try:
-    import cStringIO as StringIO
+    import io as StringIO
 except ImportError:
-    import StringIO
+    import io
 DEFAULT_BUFFER_SIZE = -1
 
-_fileobject_uses_str_type = isinstance(socket._fileobject(None)._rbuf, basestring)
+_fileobject_uses_str_type = isinstance(socket._fileobject(None)._rbuf, str)
 
 import threading
 import time
@@ -109,21 +110,21 @@ def format_exc(limit=None):
 
 import operator
 
-from urllib import unquote
+from urllib.parse import unquote
 import warnings
 
 if sys.version_info >= (3, 0):
     bytestr = bytes
     unicodestr = str
-    basestring = (bytes, str)
+    str = (bytes, str)
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given encoding."""
         # In Python 3, the native string type is unicode
         return n.encode(encoding)
 else:
     bytestr = str
-    unicodestr = unicode
-    basestring = basestring
+    unicodestr = str
+    str = str
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given encoding."""
         # In Python 2, the native string type is bytes. Assume it's already
@@ -304,8 +305,8 @@ class SizeCheckWrapper(object):
         self._check_length()
         return data
 
-    def next(self):
-        data = self.rfile.next()
+    def __next__(self):
+        data = next(self.rfile)
         self.bytes_read += len(data)
         self._check_length()
         return data
@@ -969,7 +970,7 @@ class CP_fileobject(socket._fileobject):
             try:
                 bytes_sent = self.send(data)
                 data = data[bytes_sent:]
-            except socket.error, e:
+            except socket.error as e:
                 if e.args[0] not in socket_errors_nonblocking:
                     raise
 
@@ -990,7 +991,7 @@ class CP_fileobject(socket._fileobject):
                 data = self._sock.recv(size)
                 self.bytes_read += len(data)
                 return data
-            except socket.error, e:
+            except socket.error as e:
                 if (e.args[0] not in socket_errors_nonblocking
                     and e.args[0] not in socket_error_eintr):
                     raise
@@ -1008,7 +1009,7 @@ class CP_fileobject(socket._fileobject):
             buf.seek(0, 2)  # seek end
             if size < 0:
                 # Read until EOF
-                self._rbuf = StringIO.StringIO()  # reset _rbuf.  we consume it via buf.
+                self._rbuf = io.StringIO()  # reset _rbuf.  we consume it via buf.
                 while True:
                     data = self.recv(rbufsize)
                     if not data:
@@ -1022,11 +1023,11 @@ class CP_fileobject(socket._fileobject):
                     # Already have size bytes in our buffer?  Extract and return.
                     buf.seek(0)
                     rv = buf.read(size)
-                    self._rbuf = StringIO.StringIO()
+                    self._rbuf = io.StringIO()
                     self._rbuf.write(buf.read())
                     return rv
 
-                self._rbuf = StringIO.StringIO()  # reset _rbuf.  we consume it via buf.
+                self._rbuf = io.StringIO()  # reset _rbuf.  we consume it via buf.
                 while True:
                     left = size - buf_len
                     # recv() will malloc the amount of memory given as its
@@ -1064,7 +1065,7 @@ class CP_fileobject(socket._fileobject):
                 buf.seek(0)
                 bline = buf.readline(size)
                 if bline.endswith('\n') or len(bline) == size:
-                    self._rbuf = StringIO.StringIO()
+                    self._rbuf = io.StringIO()
                     self._rbuf.write(buf.read())
                     return bline
                 del bline
@@ -1074,7 +1075,7 @@ class CP_fileobject(socket._fileobject):
                     # Speed up unbuffered case
                     buf.seek(0)
                     buffers = [buf.read()]
-                    self._rbuf = StringIO.StringIO()  # reset _rbuf.  we consume it via buf.
+                    self._rbuf = io.StringIO()  # reset _rbuf.  we consume it via buf.
                     data = None
                     recv = self.recv
                     while data != "\n":
@@ -1085,7 +1086,7 @@ class CP_fileobject(socket._fileobject):
                     return "".join(buffers)
 
                 buf.seek(0, 2)  # seek end
-                self._rbuf = StringIO.StringIO()  # reset _rbuf.  we consume it via buf.
+                self._rbuf = io.StringIO()  # reset _rbuf.  we consume it via buf.
                 while True:
                     data = self.recv(self._rbufsize)
                     if not data:
@@ -1106,10 +1107,10 @@ class CP_fileobject(socket._fileobject):
                 if buf_len >= size:
                     buf.seek(0)
                     rv = buf.read(size)
-                    self._rbuf = StringIO.StringIO()
+                    self._rbuf = io.StringIO()
                     self._rbuf.write(buf.read())
                     return rv
-                self._rbuf = StringIO.StringIO()  # reset _rbuf.  we consume it via buf.
+                self._rbuf = io.StringIO()  # reset _rbuf.  we consume it via buf.
                 while True:
                     data = self.recv(self._rbufsize)
                     if not data:
@@ -1713,19 +1714,19 @@ class HTTPServer(object):
             'Threads Idle': lambda s: getattr(self.requests, "idle", None),
             'Socket Errors': 0,
             'Requests': lambda s: (not s['Enabled']) and -1 or sum([w['Requests'](w) for w
-                                       in s['Worker Threads'].values()], 0),
+                                       in list(s['Worker Threads'].values())], 0),
             'Bytes Read': lambda s: (not s['Enabled']) and -1 or sum([w['Bytes Read'](w) for w
-                                         in s['Worker Threads'].values()], 0),
+                                         in list(s['Worker Threads'].values())], 0),
             'Bytes Written': lambda s: (not s['Enabled']) and -1 or sum([w['Bytes Written'](w) for w
-                                            in s['Worker Threads'].values()], 0),
+                                            in list(s['Worker Threads'].values())], 0),
             'Work Time': lambda s: (not s['Enabled']) and -1 or sum([w['Work Time'](w) for w
-                                         in s['Worker Threads'].values()], 0),
+                                         in list(s['Worker Threads'].values())], 0),
             'Read Throughput': lambda s: (not s['Enabled']) and -1 or sum(
                 [w['Bytes Read'](w) / (w['Work Time'](w) or 1e-6)
-                 for w in s['Worker Threads'].values()], 0),
+                 for w in list(s['Worker Threads'].values())], 0),
             'Write Throughput': lambda s: (not s['Enabled']) and -1 or sum(
                 [w['Bytes Written'](w) / (w['Work Time'](w) or 1e-6)
-                 for w in s['Worker Threads'].values()], 0),
+                 for w in list(s['Worker Threads'].values())], 0),
             'Worker Threads': {},
             }
         logging.statistics["CherryPy HTTPServer %d" % id(self)] = self.stats
@@ -1801,7 +1802,7 @@ class HTTPServer(object):
                     getattr(self, 'ssl_certificate_chain', None))
 
         # Select the appropriate socket
-        if isinstance(self.bind_addr, basestring):
+        if isinstance(self.bind_addr, str):
             # AF_UNIX socket
 
             # So we can reuse the socket...
@@ -1945,7 +1946,7 @@ class HTTPServer(object):
 
             conn = self.ConnectionClass(self, s, makefile)
 
-            if not isinstance(self.bind_addr, basestring):
+            if not isinstance(self.bind_addr, str):
                 # optional values
                 # Until we do DNS lookups, omit REMOTE_HOST
                 if addr is None: # sometimes this can happen
@@ -2006,7 +2007,7 @@ class HTTPServer(object):
 
         sock = getattr(self, "socket", None)
         if sock:
-            if not isinstance(self.bind_addr, basestring):
+            if not isinstance(self.bind_addr, str):
                 # Touch our own socket to make accept() return immediately.
                 try:
                     host, port = sock.getsockname()[:2]
@@ -2063,7 +2064,7 @@ ssl_adapters = {
 def get_ssl_adapter_class(name='pyopenssl'):
     """Return an SSL adapter class for the given name."""
     adapter = ssl_adapters[name.lower()]
-    if isinstance(adapter, basestring):
+    if isinstance(adapter, str):
         last_dot = adapter.rfind(".")
         attr_name = adapter[last_dot + 1:]
         mod_path = adapter[:last_dot]
@@ -2163,7 +2164,7 @@ class WSGIGateway(Gateway):
         # exc_info tuple."
         if self.req.sent_headers:
             try:
-                raise exc_info[0], exc_info[1], exc_info[2]
+                raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
             finally:
                 exc_info = None
 
@@ -2245,7 +2246,7 @@ class WSGIGateway_10(WSGIGateway):
             'wsgi.version': (1, 0),
             }
 
-        if isinstance(req.server.bind_addr, basestring):
+        if isinstance(req.server.bind_addr, str):
             # AF_UNIX. This isn't really allowed by WSGI, which doesn't
             # address unix domain sockets. But it's better than nothing.
             env["SERVER_PORT"] = ""
@@ -2253,7 +2254,7 @@ class WSGIGateway_10(WSGIGateway):
             env["SERVER_PORT"] = str(req.server.bind_addr[1])
 
         # Request headers
-        for k, v in req.inheaders.iteritems():
+        for k, v in list(req.inheaders.items()):
             env["HTTP_" + k.upper().replace("-", "_")] = v
 
         # CONTENT_TYPE/CONTENT_LENGTH
@@ -2281,19 +2282,19 @@ class WSGIGateway_u0(WSGIGateway_10):
         """Return a new environ dict targeting the given wsgi.version"""
         req = self.req
         env_10 = WSGIGateway_10.get_environ(self)
-        env = dict([(k.decode('ISO-8859-1'), v) for k, v in env_10.iteritems()])
-        env[u'wsgi.version'] = ('u', 0)
+        env = dict([(k.decode('ISO-8859-1'), v) for k, v in list(env_10.items())])
+        env['wsgi.version'] = ('u', 0)
 
         # Request-URI
-        env.setdefault(u'wsgi.url_encoding', u'utf-8')
+        env.setdefault('wsgi.url_encoding', 'utf-8')
         try:
-            for key in [u"PATH_INFO", u"SCRIPT_NAME", u"QUERY_STRING"]:
-                env[key] = env_10[str(key)].decode(env[u'wsgi.url_encoding'])
+            for key in ["PATH_INFO", "SCRIPT_NAME", "QUERY_STRING"]:
+                env[key] = env_10[str(key)].decode(env['wsgi.url_encoding'])
         except UnicodeDecodeError:
             # Fall back to latin 1 so apps can transcode if needed.
-            env[u'wsgi.url_encoding'] = u'ISO-8859-1'
-            for key in [u"PATH_INFO", u"SCRIPT_NAME", u"QUERY_STRING"]:
-                env[key] = env_10[str(key)].decode(env[u'wsgi.url_encoding'])
+            env['wsgi.url_encoding'] = 'ISO-8859-1'
+            for key in ["PATH_INFO", "SCRIPT_NAME", "QUERY_STRING"]:
+                env[key] = env_10[str(key)].decode(env['wsgi.url_encoding'])
 
         for k, v in sorted(env.items()):
             if isinstance(v, str) and k not in ('REQUEST_URI', 'wsgi.input'):

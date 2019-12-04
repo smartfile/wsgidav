@@ -91,9 +91,9 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 
 .. _`Developers info`: http://wsgidav.readthedocs.org/en/latest/develop.html  
 """
-import util
-from dav_error import DAVError, HTTP_NOT_FOUND
-from request_server import RequestServer
+from . import util
+from .dav_error import DAVError, HTTP_NOT_FOUND
+from .request_server import RequestServer
 
 __docformat__ = "reStructuredText"
 

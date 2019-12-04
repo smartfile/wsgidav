@@ -23,7 +23,7 @@ Valid options are (sample shows defaults)::
 """
 from wsgidav import util
 import couchdb
-from urllib import quote
+from urllib.parse import quote
 from uuid import uuid4
 
 __docformat__ = "reStructuredText"
@@ -129,7 +129,7 @@ class CouchPropertyManager(object):
         doc = self._find(normurl)
         propNames = []
         if doc:
-            for name in doc["properties"].keys():
+            for name in list(doc["properties"].keys()):
                 propNames.append(name)
         return propNames
 

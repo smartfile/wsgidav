@@ -38,13 +38,13 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 .. _`Developers info`: http://wsgidav.readthedocs.org/en/latest/develop.html  
 """
 from pprint import pprint
-from dav_error import DAVError, HTTP_LOCKED, PRECONDITION_CODE_LockConflict
+from .dav_error import DAVError, HTTP_LOCKED, PRECONDITION_CODE_LockConflict
 from wsgidav.dav_error import DAVErrorCondition
 import sys
-import util
+from . import util
 import random
 import time
-from rw_lock import ReadWriteLock
+from .rw_lock import ReadWriteLock
 
 __docformat__ = "reStructuredText"
 
@@ -62,7 +62,7 @@ def generateLockToken():
 def normalizeLockRoot(path):
     # Normalize root: /foo/bar
     assert path
-    if type(path) is unicode:
+    if type(path) is str:
         path = path.encode("utf-8") 
     path = "/" + path.strip("/")
     return path
@@ -147,7 +147,7 @@ class LockManager(object):
         userDict = {} # { <LOCKUSER>: [<tokenlist>] }
         tokenDict = {} # { <token>: <LOCKURLS> } 
         
-        print >>out, "%s: %s" % (self, msg)
+        print("%s: %s" % (self, msg), file=out)
         
         for lock in self.storage.getLockList("/", includeRoot=True, 
                                              includeChildren=True, 
@@ -161,14 +161,14 @@ class LockManager(object):
 #            assert ("URL2TOKEN:" + v["root"]) in self._dict, "Inconsistency: missing URL2TOKEN:%s" % v["root"]
 #            assert v["token"] in self._dict["URL2TOKEN:" + v["root"]], "Inconsistency: missing token %s in URL2TOKEN:%s" % (v["token"], v["root"])
                 
-        print >>out, "Locks:" 
+        print("Locks:", file=out) 
         pprint(tokenDict, indent=0, width=255)
         if tokenDict:
-            print >>out, "Locks by URL:" 
+            print("Locks by URL:", file=out) 
             pprint(urlDict, indent=4, width=255, stream=out)
-            print >>out, "Locks by principal:" 
+            print("Locks by principal:", file=out) 
             pprint(userDict, indent=4, width=255, stream=out)
-            print >>out, "Locks by owner:" 
+            print("Locks by owner:", file=out) 
             pprint(ownerDict, indent=4, width=255, stream=out)
 
 

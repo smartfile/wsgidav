@@ -18,7 +18,7 @@ See `Developers info`_ for more information about the WsgiDAV architecture.
 from wsgidav.dav_error import DAVError, HTTP_FORBIDDEN
 from wsgidav.dav_provider import DAVProvider, DAVCollection, DAVNonCollection
 
-import util
+from . import util
 import os
 #import mimetypes
 import shutil
@@ -204,11 +204,11 @@ class FolderResource(DAVCollection):
 
         nameList = []
         # self._filePath is unicode, so os.listdir returns unicode as well
-        assert isinstance(self._filePath, unicode)
+        assert isinstance(self._filePath, str)
         for name in os.listdir(self._filePath):
-            if not isinstance(name, unicode):
+            if not isinstance(name, str):
                 name = name.decode(sys.getfilesystemencoding())
-            assert isinstance(name, unicode)
+            assert isinstance(name, str)
             # Skip non files (links and mount points)
             fp = os.path.join(self._filePath, name)
             if not os.path.isdir(fp) and not os.path.isfile(fp):
@@ -291,7 +291,7 @@ class FolderResource(DAVCollection):
         try:
             # may raise: [Error 5] Permission denied: u'C:\\temp\\litmus\\ccdest'
             shutil.copystat(self._filePath, fpDest)
-        except Exception, e:
+        except Exception as e:
             _logger.debug("Could not copy folder stats: %s" % e)
         # (Live properties are copied by copy2 or copystat)
         # Copy dead properties

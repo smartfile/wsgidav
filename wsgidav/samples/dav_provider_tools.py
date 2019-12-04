@@ -8,9 +8,9 @@ import stat
 import os
 #import mimetypes
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO #@UnusedImport
+    from io import StringIO #@UnusedImport
 from wsgidav.dav_provider import DAVCollection, DAVNonCollection
 from wsgidav import util
 
@@ -30,7 +30,7 @@ class VirtualCollection(DAVCollection):
     """
     def __init__(self, path, environ, displayInfo, memberNameList):
         DAVCollection.__init__(self, path, environ)
-        if isinstance(displayInfo, basestring):
+        if isinstance(displayInfo, str):
             displayInfo = { "type": displayInfo }
         assert type(displayInfo) is dict
         assert type(memberNameList) is list
