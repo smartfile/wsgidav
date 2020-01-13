@@ -229,7 +229,7 @@ class HTTPAuthenticator(BaseMiddleware):
             authvalue = authheader[len("Basic "):]
         except:
             authvalue = ""
-        authvalue = authvalue.strip().decode("base64")
+        authvalue = base64.b64decode(authvalue.strip())
         username, password = authvalue.split(":",1)
         
         if self._domaincontroller.authDomainUser(realmname, username, password, environ):
