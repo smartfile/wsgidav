@@ -230,7 +230,7 @@ class HTTPAuthenticator(BaseMiddleware):
         except:
             authvalue = ""
         authvalue = base64.b64decode(authvalue.strip())
-        username, password = authvalue.split(":",1)
+        username, password = authvalue.decode('utf-8').split(":",1)
         
         if self._domaincontroller.authDomainUser(realmname, username, password, environ):
             environ["http_authenticator.realm"] = realmname
