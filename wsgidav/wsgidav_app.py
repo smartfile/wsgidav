@@ -355,7 +355,7 @@ class WsgiDAVApp(object):
                     userInfo = "(anonymous)"
                 threadInfo = ""
                 if self._verbose >= 1:
-                    threadInfo = "<%s> " % threading._get_ident()
+                    threadInfo = "<%s> " % threading.get_ident()
                 extra = []
                 if "HTTP_DESTINATION" in environ:
                     extra.append('dest="%s"' % environ.get("HTTP_DESTINATION"))
