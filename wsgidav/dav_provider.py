@@ -1362,8 +1362,6 @@ class DAVProvider(object):
         
         @param sharePath: a UTF-8 encoded, unquoted byte string.
         """
-        if isinstance(sharePath, str):
-            sharePath = sharePath.encode("utf8")
         assert sharePath=="" or sharePath.startswith("/")
         if sharePath == "/":
             sharePath = ""  # This allows to code 'absPath = sharePath + path'
