@@ -250,7 +250,6 @@ class WsgiDAVApp(object):
         # GC issue 22: Pylons sends root as u'/' 
         if isinstance(path, str):
             util.log("Got unicode PATH_INFO: %r" % path)
-            path = path.encode("utf8")
 
         # Always adding these values to environ:
         environ["wsgidav.config"] = self.config
