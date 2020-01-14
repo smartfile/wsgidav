@@ -332,11 +332,14 @@ class _DAVResource(object):
         @param path: a UTF-8 encoded, unquoted byte string.
         @return: a UTF-8 encoded, unquoted byte string.
         """
-        if self.path in ("", "/"):
+        path = self.path
+        if not isinstance(self.path, str):
+            path = self.path.decode('utf-8')
+        if path in ("", "/"):
             return "/"
         # Append '/' for collections
-        if self.isCollection and not self.path.endswith("/"):
-            return self.path + "/"
+        if self.isCollection and not path.endswith("/"):
+            return (path + "/").encode('utf-8')
         # TODO: handle case-sensitivity, depending on OS
         # (FileSystemProvider could do this with os.path:
         # (?) on unix we can assume that the path already matches exactly the case of filepath
