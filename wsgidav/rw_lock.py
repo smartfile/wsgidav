@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 """
 ReadWriteLock
 
@@ -15,12 +15,13 @@ Released under the BSD-license.
 # Imports
 # -------
 
-from threading import Condition, Lock, currentThread
+from threading import Condition, currentThread, Lock
 from time import time
 
 
 # Read write lock
 # ---------------
+
 
 class ReadWriteLock(object):
     """Read-Write lock class. A read-write lock differs from a standard
@@ -37,7 +38,7 @@ class ReadWriteLock(object):
     locks (which they eventually should free, as they starve the waiting
     writers otherwise), but a new thread requesting a read lock will not
     be granted one, and block. This might mean starvation for readers if
-    two writer threads interweave their calls to acquireWrite() without
+    two writer threads interweave their calls to acquire_write() without
     leaving a window only for readers.
 
     In case a current reader requests a write lock, this can and will be
@@ -45,7 +46,7 @@ class ReadWriteLock(object):
     may perform this kind of lock upgrade, as a deadlock would otherwise
     occur. After the write lock has been granted, the thread will hold a
     full write lock, and not be downgraded after the upgrading call to
-    acquireWrite() has been match by a corresponding release().
+    acquire_write() has been match by a corresponding release().
     """
 
     def __init__(self):
@@ -63,11 +64,11 @@ class ReadWriteLock(object):
         # Initialize with no readers.
         self.__readers = {}
 
-    def acquireRead(self,timeout=None):
+    def acquire_read(self, timeout=None):
         """Acquire a read lock for the current thread, waiting at most
         timeout seconds or doing a non-blocking check in case timeout is <= 0.
 
-        In case timeout is None, the call to acquireRead blocks until the
+        In case timeout is None, the call to acquire_read blocks until the
         lock request can be serviced.
 
         In case the timeout expires before the lock could be serviced, a
@@ -97,7 +98,7 @@ class ReadWriteLock(object):
                     else:
                         # Grant a new read lock, always, in case there are
                         # no pending writers (and no writer).
-                        self.__readers[me] = self.__readers.get(me,0) + 1
+                        self.__readers[me] = self.__readers.get(me, 0) + 1
                         return
                 if timeout is not None:
                     remaining = endtime - time()
@@ -110,14 +111,14 @@ class ReadWriteLock(object):
         finally:
             self.__condition.release()
 
-    def acquireWrite(self,timeout=None):
+    def acquire_write(self, timeout=None):
         """Acquire a write lock for the current thread, waiting at most
         timeout seconds or doing a non-blocking check in case timeout is <= 0.
 
         In case the write lock cannot be serviced due to the deadlock
         condition mentioned above, a ValueError is raised.
 
-        In case timeout is None, the call to acquireWrite blocks until the
+        In case timeout is None, the call to acquire_write blocks until the
         lock request can be serviced.
 
         In case the timeout expires before the lock could be serviced, a
@@ -140,9 +141,7 @@ class ReadWriteLock(object):
                     # else also wants to upgrade, there is no way we can do
                     # this except if one of us releases all his read locks.
                     # Signal this to user.
-                    raise ValueError(
-                        "Inevitable dead lock, denying write lock"
-                        )
+                    raise ValueError("Inevitable dead lock, denying write lock")
                 upgradewriter = True
                 self.__upgradewritercount = self.__readers.pop(me)
             else:

@@ -1,4 +1,9 @@
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+# -*- coding: utf-8 -*-
+
+import os
 import pkg_resources
-pkg_resources.require('wsgidav')
+import sys
+
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+pkg_resources.require("wsgidav")

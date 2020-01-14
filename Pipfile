@@ -1,0 +1,41 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+black = "==19.10b0"
+Cheroot = "~=8.1"
+flake8 = "~=3.5"
+flake8-bugbear = "~=18.2"
+flake8-quotes = "~=1.0"
+isort = "*"
+Paste = "~=2.0"
+pylint = "*"
+pytest = "~=2.7"
+pytest-cov = "~=1.8"
+python-pam = "~=1.8"
+recommonmark = "*"
+requests = "*"
+rope = "*"
+setuptools = "~=40.2"
+# setuptools = "~=38.6"
+Sphinx = "~=1.6"
+sphinx_rtd_theme = "*"
+tox = "~=3.13"
+twine = "~=1.11"
+WebTest = "~=2.0"
+wheel = "*"
+
+[packages]
+defusedxml = "~=0.5"
+Jinja2 = "~=2.10"
+PyYAML = "~=5.1"
+six = "~=1.13"
+json5 = "*"
+
+[requires]
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
