@@ -67,6 +67,8 @@ def xmlToString(element, pretty_print=False):
                              pretty_print=pretty_print)
     else:
         xml = etree.tostring(element, "UTF-8")
+    if isinstance(xml, bytes):
+        xml = xml.decode('utf-8')
     assert xml.startswith("<?xml ") 
     return xml
 
