@@ -1,0 +1,178 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "39bbf9e6ed7f423e67f58becd5d2171b51940793baa4c1b5e7f63ab571dad976"
+        },
+        "requires": {},
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "defusedxml": {
+            "version": "==0.5.0"
+        },
+        "jsmin": {
+            "version": "==2.2.2"
+        },
+        "pyyaml": {
+            "version": "==3.12"
+        }
+    },
+    "develop": {
+        "alabaster": {
+            "version": "==0.7.10"
+        },
+        "attrs": {
+            "version": "==18.1.0"
+        },
+        "babel": {
+            "version": "==2.5.3"
+        },
+        "backports.functools-lru-cache": {
+            "version": "==1.5"
+        },
+        "beautifulsoup4": {
+            "version": "==4.6.0"
+        },
+        "certifi": {
+            "version": "==2018.4.16"
+        },
+        "chardet": {
+            "version": "==3.0.4"
+        },
+        "cheroot": {
+            "version": "==6.2.4"
+        },
+        "commonmark": {
+            "version": "==0.5.4"
+        },
+        "cov-core": {
+            "version": "==1.15.0"
+        },
+        "coverage": {
+            "version": "==3.7.1"
+        },
+        "docutils": {
+            "version": "==0.14"
+        },
+        "flake8": {
+            "version": "==3.5.0"
+        },
+        "flake8-quotes": {
+            "version": "==1.0.0"
+        },
+        "idna": {
+            "version": "==2.6"
+        },
+        "imagesize": {
+            "version": "==1.0.0"
+        },
+        "jinja2": {
+            "version": "==2.10"
+        },
+        "markupsafe": {
+            "version": "==1.0"
+        },
+        "mccabe": {
+            "version": "==0.6.1"
+        },
+        "more-itertools": {
+            "version": "==4.1.0"
+        },
+        "packaging": {
+            "version": "==17.1"
+        },
+        "paste": {
+            "version": "==2.0.3"
+        },
+        "pkginfo": {
+            "version": "==1.4.2"
+        },
+        "pluggy": {
+            "version": "==0.6.0"
+        },
+        "py": {
+            "version": "==1.5.3"
+        },
+        "pycodestyle": {
+            "version": "==2.3.1"
+        },
+        "pyflakes": {
+            "version": "==1.6.0"
+        },
+        "pygments": {
+            "version": "==2.2.0"
+        },
+        "pyparsing": {
+            "version": "==2.2.0"
+        },
+        "pytest": {
+            "version": "==2.9.2"
+        },
+        "pytest-cov": {
+            "version": "==1.8.1"
+        },
+        "pytz": {
+            "version": "==2018.4"
+        },
+        "recommonmark": {
+            "version": "==0.4.0"
+        },
+        "requests": {
+            "version": "==2.18.4"
+        },
+        "requests-toolbelt": {
+            "version": "==0.8.0"
+        },
+        "setuptools": {
+            "version": "==38.7.0"
+        },
+        "six": {
+            "version": "==1.11.0"
+        },
+        "snowballstemmer": {
+            "version": "==1.2.1"
+        },
+        "sphinx": {
+            "version": "==1.7.4"
+        },
+        "sphinx-rtd-theme": {
+            "version": "==0.3.1"
+        },
+        "sphinxcontrib-websupport": {
+            "version": "==1.0.1"
+        },
+        "tox": {
+            "version": "==2.9.1"
+        },
+        "tqdm": {
+            "version": "==4.23.2"
+        },
+        "twine": {
+            "version": "==1.11.0"
+        },
+        "urllib3": {
+            "version": "==1.22"
+        },
+        "virtualenv": {
+            "version": "==15.2.0"
+        },
+        "waitress": {
+            "version": "==1.1.0"
+        },
+        "webob": {
+            "version": "==1.8.1"
+        },
+        "webtest": {
+            "version": "==2.0.29"
+        },
+        "wheel": {
+            "version": "==0.31.0"
+        }
+    }
+}

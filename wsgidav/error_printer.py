@@ -1,35 +1,39 @@
-# (c) 2009-2014 Martin Wendt and contributors; see WsgiDAV https://github.com/mar10/wsgidav
+# (c) 2009-2018 Martin Wendt and contributors; see WsgiDAV https://github.com/mar10/wsgidav
 # Original PyFileServer (c) 2005 Ho Chun Wei.
-# Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+# Licensed under the MIT license:
+# http://www.opensource.org/licenses/mit-license.php
 """
-WSGI middleware to catch application thrown DAVErrors and return proper 
+WSGI middleware to catch application thrown DAVErrors and return proper
 responses.
-
-See `Developers info`_ for more information about the WsgiDAV architecture.
-
-.. _`Developers info`: http://wsgidav.readthedocs.org/en/latest/develop.html  
 """
-__docformat__ = "reStructuredText"
-
-import util
-from dav_error import DAVError, getHttpStatusString, asDAVError,\
-    HTTP_INTERNAL_ERROR, HTTP_NOT_MODIFIED, HTTP_NO_CONTENT
 import traceback
-import sys
-from middleware import BaseMiddleware
+
+from wsgidav import util
+from wsgidav.dav_error import (
+    HTTP_INTERNAL_ERROR,
+    HTTP_NO_CONTENT,
+    HTTP_NOT_MODIFIED,
+    DAVError,
+    asDAVError,
+    getHttpStatusString,
+    )
+from wsgidav.middleware import BaseMiddleware
+
+__docformat__ = "reStructuredText"
 
 _logger = util.getModuleLogger(__name__)
 
-#===============================================================================
+
+# ========================================================================
 # ErrorPrinter
-#===============================================================================
+# ========================================================================
 class ErrorPrinter(BaseMiddleware):
 
     def __init__(self, application, config):
         self._application = application
         self._catch_all_exceptions = config.get("catchall", False)
 
-    def __call__(self, environ, start_response):      
+    def __call__(self, environ, start_response):
         # Intercept start_response
         sub_app_start_response = util.SubAppStartResponse()
 
@@ -37,7 +41,7 @@ class ErrorPrinter(BaseMiddleware):
             try:
                 # request_server app may be a generator (for example the GET handler)
                 # So we must iterate - not return self._application(..)!
-                # Otherwise the we could not catch exceptions here. 
+                # Otherwise the we could not catch exceptions here.
                 response_started = False
                 app_iter = self._application(environ, sub_app_start_response)
                 for v in app_iter:
@@ -63,45 +67,47 @@ class ErrorPrinter(BaseMiddleware):
                                    sub_app_start_response.exc_info)
 
                 return
-            except DAVError, e:
-                _logger.debug("re-raising %s" % e)
+            except DAVError as e:
+                _logger.debug("re-raising {}".format(e))
                 raise
-            except Exception, e:
-                # Caught a non-DAVError 
+            except Exception as e:
+                # Caught a non-DAVError
                 if self._catch_all_exceptions:
                     # Catch all exceptions to return as 500 Internal Error
-                    traceback.print_exc(10, environ.get("wsgi.errors") or sys.stderr)
+                    # traceback.print_exc(10, environ.get("wsgi.errors") or sys.stderr)
+                    _logger.error("{}".format(traceback.format_exc(10)))
                     raise asDAVError(e)
                 else:
-                    util.warn("ErrorPrinter: caught Exception")
-                    traceback.print_exc(10, sys.stderr) 
+                    _logger.error("Caught Exception\n{}".format(traceback.format_exc(10)))
+                    # traceback.print_exc(10, sys.stderr)
                     raise
-        except DAVError, e:
-            _logger.debug("caught %s" % e)
+        except DAVError as e:
+            _logger.debug("caught {}".format(e))
 
             status = getHttpStatusString(e)
             # Dump internal errors to console
             if e.value == HTTP_INTERNAL_ERROR:
-                print >>sys.stdout, "ErrorPrinter: caught HTTPRequestException(HTTP_INTERNAL_ERROR)"
-                traceback.print_exc(10, environ.get("wsgi.errors") or sys.stdout)
-                print >>sys.stdout, "e.srcexception:\n%s" % e.srcexception
+                tb = traceback.format_exc(10)
+                _logger.error("Caught HTTPRequestException(HTTP_INTERNAL_ERROR)\n{}".format(tb))
+                # traceback.print_exc(10, environ.get("wsgi.errors") or sys.stdout)
+                _logger.error("e.srcexception:\n{}".format(e.srcexception))
             elif e.value in (HTTP_NOT_MODIFIED, HTTP_NO_CONTENT):
-#                util.log("ErrorPrinter: forcing empty error response for %s" % e.value)
+                # _logger.warn("Forcing empty error response for {}".format(e.value))
                 # See paste.lint: these code don't have content
                 start_response(status, [("Content-Length", "0"),
                                         ("Date", util.getRfc1123Time()),
                                         ])
-                yield ""
+                yield b""
                 return
 
-            # If exception has pre-/post-condition: return as XML response, 
-            # else return as HTML 
-            content_type, body = e.getResponsePage()            
+            # If exception has pre-/post-condition: return as XML response,
+            # else return as HTML
+            content_type, body = e.getResponsePage()
 
             # TODO: provide exc_info=sys.exc_info()?
-            start_response(status, [("Content-Type", content_type), 
+            start_response(status, [("Content-Type", content_type),
                                     ("Content-Length", str(len(body))),
                                     ("Date", util.getRfc1123Time()),
                                     ])
-            yield body 
+            yield body
             return

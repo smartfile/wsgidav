@@ -1,10 +1,19 @@
+sudo: false
 language: python
 python:
-  - "2.6"
-  - "2.7"
-install: 
-  "pip install Paste"
+    - "2.7"
+#    - "3.3"  # End-of-life September 2017
+    - "3.4"
+    - "3.5"
+    - "3.6"
+#    - "3.7"  # Planned for 2018-06
+sudo: required
+before_install:
+    # See issue #80: litmus fails to build on travis
+    # The branch 'travis-litmus' still has this enabled to investigate...
+#    - sudo apt-get install libneon27-dev
+#    - ./install_litmus.sh
+install:
+    pip install tox-travis
 script:
-  - nosetests -v --exclude test_litmus
-notifications:
-  slack: smartfile:tbDIPzVJIPBpSz29kQw6b8RQ
+    tox
