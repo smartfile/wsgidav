@@ -259,7 +259,7 @@ class ExtServer (socketserver.ThreadingMixIn, http.server.HTTPServer):
         # This is what BaseHTTPServer.HTTPServer.handle_error does, but with
         # added thread ID and using stderr
         print('-'*40, file=sys.stderr)
-        print('<%s> Exception happened during processing of request from %s' % (threading._get_ident(), client_address), file=sys.stderr)
+        print('<%s> Exception happened during processing of request from %s' % (threading.get_ident(), client_address), file=sys.stderr)
         print(client_address, file=sys.stderr)
         traceback.print_exc()
         print('-'*40, file=sys.stderr)

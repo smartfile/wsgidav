@@ -137,7 +137,7 @@ class WsgiDavDebugFilter(BaseMiddleware):
 
         # Dump request headers
         if dumpRequest:      
-            print("<%s> --- %s Request ---" % (threading._get_ident(), method), file=self.out)
+            print("<%s> --- %s Request ---" % (threading.get_ident(), method), file=self.out)
             for k, v in list(environ.items()):
                 if k == k.upper():
                     print("%20s: '%s'" % (k, v), file=self.out)
@@ -161,7 +161,7 @@ class WsgiDavDebugFilter(BaseMiddleware):
 
             # Dump response headers
             if first_yield and dumpResponse:
-                print("<%s> --- %s Response(%s): ---" % (threading._get_ident(), 
+                print("<%s> --- %s Response(%s): ---" % (threading.get_ident(), 
                                                                       method, 
                                                                       sub_app_start_response.status), file=self.out)
                 headersdict = dict(sub_app_start_response.response_headers)
@@ -201,5 +201,5 @@ class WsgiDavDebugFilter(BaseMiddleware):
                            sub_app_start_response.exc_info)
 
         if dumpResponse:
-            print("\n<%s> --- End of %s Response (%i bytes) ---" % (threading._get_ident(), method, nbytes), file=self.out)
+            print("\n<%s> --- End of %s Response (%i bytes) ---" % (threading.get_ident(), method, nbytes), file=self.out)
         return 
