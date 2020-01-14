@@ -370,8 +370,9 @@ def toUnicode(s):
         return s
     try:
         u = s.decode("utf8")
-#        log("toUnicode(%r) = '%r'" % (s, u))
-    except:
+    except AttributeError:
+        return s
+    except UnicodeDecodeError:
         log("toUnicode(%r) *** UTF-8 failed. Trying latin-1 " % s)
         u = s.decode("latin-1")
     return u
