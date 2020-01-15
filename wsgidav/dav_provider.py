@@ -365,7 +365,10 @@ class _DAVResource(object):
 
         See also comments in DEVELOPERS.txt glossary.
         """
-        return compat.quote(self.provider.sharePath + self.getPreferredPath())
+        value = self.getPreferredPath()
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        return compat.quote(self.provider.sharePath + value)
 
 #    def getRefKey(self):
 #        """Return an unambigous identifier string for a resource.
@@ -393,8 +396,10 @@ class _DAVResource(object):
         # Nautilus chokes, if href encodes '(' as '%28'
         # So we don't encode 'extra' and 'safe' characters (see rfc2068 3.2.1)
         safe = "/" + "!*'()," + "$-_|."
-        return compat.quote(self.provider.mountPath + self.provider.sharePath
-                            + self.getPreferredPath(), safe=safe)
+        value = self.getPreferredPath()
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        return compat.quote(self.provider.mountPath + self.provider.sharePath + value, safe=safe)
 
 
 #    def getParent(self):
