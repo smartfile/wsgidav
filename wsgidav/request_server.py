@@ -241,9 +241,6 @@ class RequestServer(object):
             for lock in lockList:
                 locktokenlist.append(lock["token"])
 
-        if not util.testIfHeaderDict(res, ifDict, refUrl, locktokenlist, entitytag):
-            self._fail(HTTP_PRECONDITION_FAILED, "'If' header condition failed.")
-
         return
 
     def doPROPFIND(self, environ, start_response):
