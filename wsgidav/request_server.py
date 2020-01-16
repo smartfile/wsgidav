@@ -860,6 +860,7 @@ class RequestServer(object):
         if srcRes.isCollection:
             destPath = destPath.rstrip("/") + "/"
 
+        _logger.debug("Dest scheme {} url scheme {}'".format(destScheme.lower(), environ["wsgi.url_scheme"].lower()))
         if destScheme and destScheme.lower() != environ["wsgi.url_scheme"].lower():
             self._fail(HTTP_BAD_GATEWAY, "Source and destination must have the same scheme.")
         elif destNetloc and destNetloc.lower() != environ["HTTP_HOST"].lower():
