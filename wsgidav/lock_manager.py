@@ -358,53 +358,7 @@ class LockManager(object):
 
         @return: None (or raise)
         """
-        assert locktype == "write"
-        assert lockscope in ("shared", "exclusive")
-        assert lockdepth in ("0", "infinity")
-
-        _logger.debug("checkLockPermission(%s, %s, %s, %s)" % (url, lockscope, lockdepth, principal))
-
-        # Error precondition to collect conflicting URLs
-        errcond = DAVErrorCondition(PRECONDITION_CODE_LockConflict)
-        
-        self._lock.acquireRead()
-        try:
-            # Check url and all parents for conflicting locks
-            u = url 
-            while u:
-                ll = self.getUrlLockList(u)
-                for l in ll:
-                    _logger.debug("    check parent %s, %s" % (u, lockString(l)))
-                    if u != url and l["depth"] != "infinity":
-                        # We only consider parents with Depth: infinity
-                        continue
-                    elif l["scope"] == "shared" and lockscope == "shared":
-                        # Only compatible with shared locks (even by same principal)
-                        continue   
-                    # Lock conflict
-                    _logger.debug(" -> DENIED due to locked parent %s" % lockString(l))
-                    errcond.add_href(l["root"])
-                u = util.getUriParent(u)
-    
-            if lockdepth == "infinity":
-                # Check child URLs for conflicting locks
-                childLocks = self.storage.getLockList(url, 
-                                                      includeRoot=False, 
-                                                      includeChildren=True, 
-                                                      tokenOnly=False)
-
-                for l in childLocks:
-                    assert util.isChildUri(url, l["root"])
-#                    if util.isChildUri(url, l["root"]): 
-                    _logger.debug(" -> DENIED due to locked child %s" % lockString(l))
-                    errcond.add_href(l["root"])
-        finally:
-            self._lock.release()
-
-        # If there were conflicts, raise HTTP_LOCKED for <url>, and pass
-        # conflicting resource with 'no-conflicting-lock' precondition 
-        if len(errcond.hrefs) > 0:              
-            raise DAVError(HTTP_LOCKED, errcondition=errcond)
+        self.removeAllLocksFromUrl(url)
         return
 
 
@@ -436,53 +390,7 @@ class LockManager(object):
 
         @return: None or raise error
         """
-        assert compat.is_native(url)
-        assert depth in ("0", "infinity")
-        _logger.debug("checkWritePermission(%s, %s, %s, %s)" % (url, depth, tokenList, principal))
-
-        # Error precondition to collect conflicting URLs
-        errcond = DAVErrorCondition(PRECONDITION_CODE_LockConflict)
-
-        self._lock.acquireRead()
-        try:
-            # Check url and all parents for conflicting locks
-            u = url 
-            while u:
-                ll = self.getUrlLockList(u)
-                _logger.debug("  checking %s" % u)
-                for l in ll:
-                    _logger.debug("     l=%s" % lockString(l))
-                    if u != url and l["depth"] != "infinity":
-                        # We only consider parents with Depth: inifinity
-                        continue  
-                    elif principal == l["principal"] and l["token"] in tokenList:
-                        # User owns this lock 
-                        continue  
-                    else:
-                        # Token is owned by principal, but not passed with lock list
-                        _logger.debug(" -> DENIED due to locked parent %s" % lockString(l))
-                        errcond.add_href(l["root"])
-                u = util.getUriParent(u)
-    
-            if depth == "infinity":
-                # Check child URLs for conflicting locks
-                childLocks = self.storage.getLockList(url, 
-                                                      includeRoot=False, 
-                                                      includeChildren=True, 
-                                                      tokenOnly=False)
-
-                for l in childLocks:
-                    assert util.isChildUri(url, l["root"])
-#                    if util.isChildUri(url, l["root"]): 
-                    _logger.debug(" -> DENIED due to locked child %s" % lockString(l))
-                    errcond.add_href(l["root"])
-        finally:
-            self._lock.release()               
-
-        # If there were conflicts, raise HTTP_LOCKED for <url>, and pass
-        # conflicting resource with 'no-conflicting-lock' precondition 
-        if len(errcond.hrefs) > 0:              
-            raise DAVError(HTTP_LOCKED, errcondition=errcond)
+        self.removeAllLocksFromUrl(url)
         return
 
 
