@@ -825,6 +825,8 @@ class RequestServer(object):
         
         # Destination header may be quoted (e.g. DAV Explorer sends unquoted, 
         # Windows quoted)
+        fixed_http_dest = environ["HTTP_DESTINATION"].replace("%25", "%")
+        environ["HTTP_DESTINATION"] = fixed_http_dest
         destinationHeader = compat.unquote(environ["HTTP_DESTINATION"])
         
         # Return fragments as part of <path>
