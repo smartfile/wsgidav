@@ -333,6 +333,8 @@ class _DAVResource(object):
         # (FileSystemProvider could do this with os.path:
         # (?) on unix we can assume that the path already matches exactly the case of filepath
         #     on windows we could use path.lower() or get the real case from the file system
+        if isinstance(self.path, bytes):
+            return self.path.decode('utf-8')
         return self.path
 
     def getRefUrl(self):
