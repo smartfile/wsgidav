@@ -342,7 +342,7 @@ class _DAVResource(object):
         # (FileSystemProvider could do this with os.path:
         # (?) on unix we can assume that the path already matches exactly the case of filepath
         #     on windows we could use path.lower() or get the real case from the file system
-        return self.path
+        return path
 
     def getRefUrl(self):
         """Return the quoted, absolute, unique URL of a resource, relative to appRoot.
