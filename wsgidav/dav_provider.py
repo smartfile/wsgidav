@@ -333,8 +333,12 @@ class _DAVResource(object):
         if self.path in ("", "/"):
             return "/"
         # Append '/' for collections
-        if self.isCollection and not self.path.endswith("/"):
-            return self.path + "/"
+        if self.isCollection:
+            path = self.path
+            if isinstance(path, str):
+                path = self.path.encode('utf-8')
+            if not path.endswith("/"):
+                return self.path + "/"
         # TODO: handle case-sensitivity, depending on OS 
         # (FileSystemProvider could do this with os.path:
         # (?) on unix we can assume that the path already matches exactly the case of filepath
