@@ -61,6 +61,7 @@ import threading
 
 from wsgidav import compat
 from wsgidav.middleware import BaseMiddleware
+from wsgidav.util import safeReEncode
 from wsgidav import util
 
 __docformat__ = "reStructuredText"
@@ -144,7 +145,7 @@ class WsgiDavDebugFilter(BaseMiddleware):
             print("<%s> --- %s Request ---" % (threading.currentThread().ident, method), file=self.out)
             for k, v in environ.items():
                 if k == k.upper():
-                    print("%20s: '%s'" % (k, v), file=self.out)
+                    print("%20s: '%s'" % (k, safeReEncode(v, self.out.encoding)), file=self.out)
             print("\n", file=self.out)
 
         # Intercept start_response
