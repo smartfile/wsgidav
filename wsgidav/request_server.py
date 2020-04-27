@@ -230,7 +230,7 @@ class RequestServer(object):
                 locktokenlist.append(lock["token"])
 
         if not util.testIfHeaderDict(res, ifDict, refUrl, locktokenlist, entitytag):
-            _logger.log("PRECONDITION FAILED IF HEADER CONDITION FAILED")
+            _logger.log(logging.CRITICAL, "PRECONDITION FAILED IF HEADER CONDITION FAILED")
             self._fail(HTTP_PRECONDITION_FAILED, "'If' header condition failed.")
 
         return
@@ -874,7 +874,7 @@ class RequestServer(object):
             self._fail(HTTP_FORBIDDEN, "Cannot copy/move source below itself")
 
         if destExists and environ["HTTP_OVERWRITE"] != "T":
-            _logger.log("PRECONDITION FAILED DEST EXISTS AND OVERWRITE FALSE")
+            _logger.log(logging.CRITICAL, "PRECONDITION FAILED DEST EXISTS AND OVERWRITE FALSE")
             self._fail(HTTP_PRECONDITION_FAILED,
                        "Destination already exists and Overwrite is set to false")
 
@@ -1093,7 +1093,7 @@ class RequestServer(object):
                 self._fail(HTTP_BAD_REQUEST,
                            "Expected a lock token (only one lock may be refreshed at a time).")
             elif not lockMan.isUrlLockedByToken(res.getRefUrl(), submittedTokenList[0]):
-                _logger.log("PRECONDITION FAILED LOCK TOKEN DOES NOT MATCH")
+                _logger.log(logging.CRITICAL, "PRECONDITION FAILED LOCK TOKEN DOES NOT MATCH")
                 self._fail(HTTP_PRECONDITION_FAILED,
                            "Lock token does not match URL.",
                            errcondition=PRECONDITION_CODE_LockTokenMismatch)

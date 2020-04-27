@@ -1040,7 +1040,7 @@ def evaluateHTTPConditionals(davres, lastmodified, entitytag, environ):
             ifmatchtag = ifmatchtag.strip(" \"\t")
             if ifmatchtag == entitytag or ifmatchtag == "*":
                 break
-            _logger.log("PRECONDITION FAILED IF MATCH HEADER CONDITION FAILED")
+            _logger.log(logging.CRITICAL, "PRECONDITION FAILED IF MATCH HEADER CONDITION FAILED")
             raise DAVError(HTTP_PRECONDITION_FAILED,
                            "If-Match header condition failed")
 
@@ -1067,7 +1067,7 @@ def evaluateHTTPConditionals(davres, lastmodified, entitytag, environ):
                 if environ["REQUEST_METHOD"] in ("GET", "HEAD") and not ifModifiedSinceFailed:
                     raise DAVError(HTTP_NOT_MODIFIED,
                                    "If-None-Match header failed")
-                _logger.log("PRECONDITION FAILED IF NONE HEADER CONDITION FAILED")
+                _logger.log(logging.CRITICAL, "PRECONDITION FAILED IF NONE HEADER CONDITION FAILED")
                 raise DAVError(HTTP_PRECONDITION_FAILED,
                                "If-None-Match header condition failed")
         ignoreIfModifiedSince = True
@@ -1075,7 +1075,7 @@ def evaluateHTTPConditionals(davres, lastmodified, entitytag, environ):
     if "HTTP_IF_UNMODIFIED_SINCE" in environ and davres.supportModified():
         ifunmodtime = parseTimeString(environ["HTTP_IF_UNMODIFIED_SINCE"])
         if ifunmodtime and ifunmodtime <= lastmodified:
-            _logger.log("PRECONDITION FAILED IF UMODIFIED SINCE HEADER CONDITION FAILED")
+            _logger.log(logging.CRITICAL, "PRECONDITION FAILED IF UMODIFIED SINCE HEADER CONDITION FAILED")
             raise DAVError(HTTP_PRECONDITION_FAILED,
                            "If-Unmodified-Since header condition failed")
 
@@ -1147,6 +1147,8 @@ def testIfHeaderDict(davres, dictIf, fullurl, locktokenlist, entitytag):
     debug("testIfHeaderDict(%s, %s, %s)" % (fullurl, locktokenlist, entitytag),
           var=dictIf, module="if")
 
+    _logger.log(logging.CRITICAL, "testIfHeaderDict(%s, %s, %s)" % (fullurl, locktokenlist, entitytag))
+
     if fullurl in dictIf:
         listTest = dictIf[fullurl]
     elif "*" in dictIf:
@@ -1160,6 +1162,7 @@ def testIfHeaderDict(davres, dictIf, fullurl, locktokenlist, entitytag):
         matchfailed = False
 
         for (testflag, checkstyle, checkvalue) in listTestConds:
+            _logger.log(logging.CRITICAL, "(%s, %s, %s)" % (testflag, checkstyle, checkvalue))
             if checkstyle == "entity" and supportEntityTag:
                 testresult = entitytag == checkvalue
             elif checkstyle == "entity":
